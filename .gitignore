@@ -37,3 +37,9 @@
 *.lastbuildstate
 
 *.idb
+
+*.suo
+*ilk
+*.pdb
+*.sdf
+*.opendb
