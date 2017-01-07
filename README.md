@@ -1,4 +1,4 @@
-# SWGCommandExtension
+# GalaxyExtender
 Allows for extensions of the Star Wars Galaxies client.
 
 *     **/globaldetail X** - sets the Global Detail Level to X, valid ranges are 1-24. You must move the slider in Terrain options AFTER using this command.
