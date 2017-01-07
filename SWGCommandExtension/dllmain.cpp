@@ -106,16 +106,6 @@ internalGameGetPlayerObject gameGetPlayerObject = (internalGameGetPlayerObject)G
 ///
 
 
-/// Still in testing
-#define MACRO_ADDRESS 0x424810
-int(__cdecl *internalMacro)(int, int, int, int);
-int hkInternalMacro(int a1, int a2, int a3, int a4)
-{
-	return internalMacro(a1, a2, a3, a4);
-}
-///
-
-
 /// Direct Hooks
 ///
 // Technically this isn't THE command handler, it's just the handler
@@ -389,8 +379,7 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 	case DLL_PROCESS_ATTACH:
 
 		// Direct function hooks.
-		originalCommandHandler = (char(__cdecl*)(int, int, int, int))DetourFunction((PBYTE)COMMAND_HANDLER_ADDRESS, (PBYTE)hkCommandHandler);
-		internalMacro = (int(__cdecl*)(int, int, int, int))DetourFunction((PBYTE)MACRO_ADDRESS, (PBYTE)hkInternalMacro);
+		originalCommandHandler = (char(__cdecl*)(int, int, int, int))DetourFunction((PBYTE)COMMAND_HANDLER_ADDRESS, (PBYTE)hkCommandHandler);		
 		
 		// Mid-function hooks for global detail and high detail terrain distance.
 		writeJmp((BYTE*)terrainDistJmpAddress, (DWORD)terrainDistanceSliderHook, 5);
@@ -409,6 +398,10 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 
 		luabridge::getGlobalNamespace(lua->L()).addFunction("echo", echo);
 
+		luabridge::getGlobalNamespace(lua->L()).addFunction("gameGetPlayerCreature", gameGetPlayerCreature);
+		luabridge::getGlobalNamespace(lua->L()).addFunction("gameGetPlayer", gameGetPlayer);
+		luabridge::getGlobalNamespace(lua->L()).addFunction("gameGetPlayerObject", gameGetPlayerObject);
+		
 		break;
 	}
 
