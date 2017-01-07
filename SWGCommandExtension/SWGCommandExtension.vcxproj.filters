@@ -13,6 +13,21 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Lua">
+      <UniqueIdentifier>{1b54b7d9-1f3a-4102-8b64-c431abd22e9b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Game">
+      <UniqueIdentifier>{bb969420-22d4-4c19-88a5-665eec8cbd1d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lua">
+      <UniqueIdentifier>{9af05b60-8648-4f8c-adae-5816f9cacbb5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Game">
+      <UniqueIdentifier>{39b3cbfa-c11b-48a2-95ff-a897ba7cb684}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lua\LuaBridge">
+      <UniqueIdentifier>{3a26855e-13a0-4aab-a493-b098df00beb4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -24,6 +39,21 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaEngine.h">
+      <Filter>Header Files\Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="TangibleObject.h">
+      <Filter>Header Files\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="CreatureObject.h">
+      <Filter>Header Files\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaBridge\LuaBridge.h">
+      <Filter>Header Files\Lua\LuaBridge</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -34,6 +64,12 @@
     </ClCompile>
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LuaEngine.cpp">
+      <Filter>Source Files\Lua</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

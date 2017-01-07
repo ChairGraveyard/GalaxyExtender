@@ -1,67 +1,24 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "stdafx.h"
 
+#include "utility.h"
+#include "LuaEngine.h"
+
+#include "CreatureObject.h"
+
 #include <windows.h>
 #include <detours.h>
 #include <iostream>
 #include <iterator>
-#include <string>
-#include <vector>
+
+
+#include "LuaBridge\LuaBridge.h"
 
 using namespace std;
 
-/// General Utilities
+/// Lua Related
+static LuaEngine* lua = NULL;
 ///
-void split(const string& s, char delim, vector<string>& v) {
-	auto i = 0;
-	auto pos = s.find(delim);
-	while (pos != string::npos) {
-		v.push_back(s.substr(i, pos - i));
-		i = ++pos;
-		pos = s.find(delim, pos);
-
-		if (pos == string::npos)
-			v.push_back(s.substr(i, s.length()));
-	}
-}
-
-void split(const wstring& s, wchar_t delim, vector<wstring>& v) {
-	auto i = 0;
-	auto pos = s.find(delim);
-	while (pos != wstring::npos) {
-		v.push_back(s.substr(i, pos - i));
-		i = ++pos;
-		pos = s.find(delim, pos);
-
-		if (pos == wstring::npos)
-			v.push_back(s.substr(i, s.length()));
-	}
-}
-///
-///
-
-/// Memory Utilties
-///
-void writeJmp(BYTE* address, DWORD jumpTo, DWORD length)
-{
-	DWORD oldProtect, newProtect, relativeAddress;
-
-	VirtualProtect(address, length, PAGE_EXECUTE_READWRITE, &oldProtect);
-
-	relativeAddress = (DWORD)(jumpTo - (DWORD)address) - 5;
-	*address = 0xE9;
-	*((DWORD *)(address + 0x1)) = relativeAddress;
-
-	for (DWORD x = 0x5; x < length; x++)
-	{
-		*(address + x) = 0x90;
-	}
-
-	VirtualProtect(address, length, oldProtect, &newProtect);
-}
-///
-///
-
 
 /// Mid-Function Hooks
 ///
@@ -125,6 +82,19 @@ internalNonCollidableFloraSlider nonCollidableFloraSlider = (internalNonCollidab
 typedef float(__cdecl* internalRadialFloraSlider)(float);
 internalRadialFloraSlider radialFloraSlider = (internalRadialFloraSlider)RADIAL_FLORA_ADDRESS;
 
+
+#define GAME_GETPLAYER_ADDRESS 0x425140
+typedef void*(__cdecl* internalGameGetPlayer)();
+internalGameGetPlayer gameGetPlayer = (internalGameGetPlayer)GAME_GETPLAYER_ADDRESS; /* this returns the main player from the Game, usually its a CreatureObject*/
+
+#define GAME_GETPLAYERCREATURE_ADDRESS 0x425200
+typedef CreatureObject*(__cdecl* internalGameGetPlayerCreature)();
+internalGameGetPlayerCreature gameGetPlayerCreature = (internalGameGetPlayerCreature)GAME_GETPLAYERCREATURE_ADDRESS; /* this returns the main CreatureObject from the Game*/
+
+#define GAME_GETPLAYEROBJECT_ADDRESS 0x425180
+typedef void*(__cdecl* internalGameGetPlayerObject)();
+internalGameGetPlayerObject gameGetPlayerObject = (internalGameGetPlayerObject)GAME_GETPLAYEROBJECT_ADDRESS; /* this returns the main PlayerObject (ghost from CreatureObject) from the Game*/
+
 ///
 ///
 
@@ -135,10 +105,21 @@ internalRadialFloraSlider radialFloraSlider = (internalRadialFloraSlider)RADIAL_
 ///
 ///
 
+
+/// Still in testing
+#define MACRO_ADDRESS 0x424810
+int(__cdecl *internalMacro)(int, int, int, int);
+int hkInternalMacro(int a1, int a2, int a3, int a4)
+{
+	return internalMacro(a1, a2, a3, a4);
+}
+///
+
+
 /// Direct Hooks
 ///
-// Technically this isn't the command handler, it's just the handler
-// for language commands, moods, etc., but it's perfect for our case as 
+// Technically this isn't THE command handler, it's just the handler
+// for language commands, moods, etc., but it works for our case as 
 // it's the last type of command checked, which means we know most others
 // have gotten a chance to be processed before us.
 #define COMMAND_HANDLER_ADDRESS 0x9FF6F0   
@@ -178,7 +159,7 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 				globalDetailOverrideValue = newVal;
 
 				// Tell the user to slide the slider to make the override take effect.				
-				echo("Global Detail Level changed! However, this setting will not take effect until you open the Options, click the Terrain tab, and move the Global Detail Level slider.");
+				echo(("Global Detail Level set to " + to_string(newVal) + "! However, this setting will not take effect until you open the Options, click the Terrain tab, and move the Global Detail Level slider.").c_str());
 
 				handled = true;
 			}
@@ -189,7 +170,7 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 				terrainDistanceOverrideValue = newVal;
 
 				// Tell the user to slide the slider to make the override take effect.												
-				echo("High Detail Terrain Distance changed! However, this setting will not take effect until you open the Options, click the Terrain tab, and move the High Detail Terrain Distance slider.");
+				echo(("High Detail Terrain Distance set to " + to_string(newVal) + "! However, this setting will not take effect until you open the Options, click the Terrain tab, and move the High Detail Terrain Distance slider.").c_str());
 
 				handled = true;
 			}
@@ -198,7 +179,7 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 				float newVal = stof(args[1]);
 				radialFloraSlider(newVal);
 
-				echo("Radial Flora distance set.");
+				echo(("Radial Flora distance set to " + to_string(newVal)).c_str());
 
 				handled = true;
 			}
@@ -207,7 +188,7 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 				float newVal = stof(args[1]);
 				nonCollidableFloraSlider(newVal);
 
-				echo("Non-Collidable Flora distance set.");
+				echo(("Non-Collidable Flora distance set to " + to_string(newVal)).c_str());
 
 				handled = true;
 			}
@@ -220,7 +201,7 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 
 				(*viewDistance) = newVal;
 
-				echo("View distance distance set.");
+				echo(("View distance distance set to " + to_string(newVal)).c_str());
 
 				handled = true;
 			}
@@ -302,6 +283,20 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 
 				handled = true;
 			}
+			else if (command == L"lua")
+			{
+				if (lua)
+					lua->ExecuteString(ws2s(args[1]).c_str());
+
+				handled = true;
+			}
+			else if (command == L"luaf")
+			{
+				if (lua)
+					lua->ExecuteFile(ws2s(args[1]).c_str());
+
+				handled = true;
+			}
 
 			// Check for other commands
 		}
@@ -312,21 +307,15 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 			if (command == L"getradialflora")
 			{
 				double radialDist = getRadialFloraDistance();
-				string radialDistString = to_string(radialDist);
-
-				echo("Radial Flora Distance: ");
-				echo(radialDistString.c_str());
+				echo(("Radial Flora Distance: " + to_string(radialDist)).c_str());
 
 				handled = true;
 			}
 			else if (command == L"getnoncollidableflora" || command == L"getncflora")
 			{
 				double ncDist = getNonCollidableFloraDistance();
-				string ncDistString = to_string(ncDist);
-
-				echo("Non-Collidable Flora Distance: ");
-				echo(ncDistString.c_str());
-
+				echo(("Non-Collidable Flora Distance: " + to_string(ncDist)).c_str());
+				
 				handled = true;
 			}
 			else if (command == L"getviewdistance" || command == L"getvd")
@@ -335,8 +324,7 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 				float* viewDistance = (float*)((*viewDistBase) + VIEW_DISTANCE_OFFSET);
 				string viewDistString = to_string((*viewDistance));
 
-				echo("View/Rendering Distance: ");
-				echo(viewDistString.c_str());
+				echo(("View/Rendering Distance: " + viewDistString).c_str());				
 
 				handled = true;
 			}
@@ -356,6 +344,29 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 
 				handled = true;
 			}
+			else if (command == L"getcurrenthealth")
+			{
+				CreatureObject* creature = gameGetPlayerCreature();
+
+				if (creature)
+					echo(string("Your current health is: " + to_string(creature->getAttribute(CreatureObject::Health))).c_str());			
+				else
+					echo("Main Player CreatureObject is null");				
+
+				handled = true;
+			}
+			else if (command == L"getcurrentlocation" || command == L"getloc")
+			{
+				CreatureObject* creature = gameGetPlayerCreature();
+
+				if (creature)											
+					echo(string("Your location is: " + to_string(creature->getXLocation()) + " " + to_string(creature->getZLocation())).c_str());
+				else
+					echo("Main Player CreatureObject is null");
+
+				handled = true;
+			}
+
 		}
 
 	}
@@ -370,6 +381,7 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 ///
 ///
 
+
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 {
 	switch (dwReason)
@@ -378,14 +390,24 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 
 		// Direct function hooks.
 		originalCommandHandler = (char(__cdecl*)(int, int, int, int))DetourFunction((PBYTE)COMMAND_HANDLER_ADDRESS, (PBYTE)hkCommandHandler);
-
+		internalMacro = (int(__cdecl*)(int, int, int, int))DetourFunction((PBYTE)MACRO_ADDRESS, (PBYTE)hkInternalMacro);
+		
 		// Mid-function hooks for global detail and high detail terrain distance.
 		writeJmp((BYTE*)terrainDistJmpAddress, (DWORD)terrainDistanceSliderHook, 5);
 		writeJmp((BYTE*)globalDetailJmpAddress, (DWORD)globalDetailSliderHook, 5);
 
 		// Show our loaded message (only displays if chat is already present).
-		echo("[LOADED] Settings Override Extensions by N00854180T");
+		echo("[LOADED] GalaxyExtender by N00854180T");
 		echo("Use /exthelp for details on extension command usage.");
+
+		// Load Lua Engine
+		lua = new LuaEngine();
+
+		// Register other internal classes for Lua use here.
+		if (lua)
+			CreatureObject::register_lua(lua->L());		
+
+		luabridge::getGlobalNamespace(lua->L()).addFunction("echo", echo);
 
 		break;
 	}
