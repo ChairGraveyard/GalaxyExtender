@@ -87,9 +87,6 @@ public:
 		JUMPTOCLIENT(0x4328D0);
 	}
 
-	//Static register function exposes our Person struct to Lua
-	//Ideally each object you want to expose would implement its own
-	//version of this method
 	static void register_lua(lua_State* L)
 	{
 		using namespace luabridge;

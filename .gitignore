@@ -271,15 +271,5 @@ paket-files/
 __pycache__/
 *.pyc
 
-<<<<<<< HEAD
 # Cake - Uncomment if you are using it
 # tools/
-=======
-*.idb
-
-*.suo
-*ilk
-*.pdb
-*.sdf
-*.opendb
->>>>>>> master
