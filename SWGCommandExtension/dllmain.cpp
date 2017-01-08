@@ -8,6 +8,9 @@
 #include <string>
 #include <vector>
 
+#include "CreatureObject.h"
+#include "PlayerObject.h"
+
 using namespace std;
 
 /// General Utilities
@@ -62,7 +65,6 @@ void writeJmp(BYTE* address, DWORD jumpTo, DWORD length)
 ///
 ///
 
-
 /// Mid-Function Hooks
 ///
 DWORD globalDetailJmpAddress = 0x85E1C1;
@@ -97,6 +99,8 @@ __declspec(naked) void terrainDistanceSliderHook()
 ///
 ///
 
+class CreatureObject;
+
 /// Direct Internal Functions
 ///
 ///
@@ -125,6 +129,28 @@ internalNonCollidableFloraSlider nonCollidableFloraSlider = (internalNonCollidab
 typedef float(__cdecl* internalRadialFloraSlider)(float);
 internalRadialFloraSlider radialFloraSlider = (internalRadialFloraSlider)RADIAL_FLORA_ADDRESS;
 
+#define GAME_GETPLAYER_ADDRESS 0x425140
+typedef void*(__cdecl* internalGameGetPlayer)();
+internalGameGetPlayer gameGetPlayer = (internalGameGetPlayer)GAME_GETPLAYER_ADDRESS; /* this returns the main player from the Game, usually its a CreatureObject*/
+
+#define GAME_GETPLAYERCREATURE_ADDRESS 0x425200
+typedef CreatureObject*(__cdecl* internalGameGetPlayerCreature)();
+internalGameGetPlayerCreature gameGetPlayerCreature = (internalGameGetPlayerCreature)GAME_GETPLAYERCREATURE_ADDRESS; /* this returns the main CreatureObject from the Game*/
+
+#define GAME_GETPLAYEROBJECT_ADDRESS 0x425180
+typedef PlayerObject*(__cdecl* internalGameGetPlayerObject)();
+internalGameGetPlayerObject gameGetPlayerObject = (internalGameGetPlayerObject)GAME_GETPLAYEROBJECT_ADDRESS; /* this returns the main PlayerObject (ghost from CreatureObject) from the Game*/
+
+#define GAMELANGUAGEMANAGER_GETLANGUAGESPEAKSKILLMODNAME_ADDRESS 0x011C6270
+typedef void(__cdecl* getLanguageSpeakSkillModName_t)(const int, stlportstring&);
+getLanguageSpeakSkillModName_t getLanguageSpeakSkillModName = (getLanguageSpeakSkillModName_t)GAMELANGUAGEMANAGER_GETLANGUAGESPEAKSKILLMODNAME_ADDRESS;
+
+#define CLIENTCOMMANDQUEUE_ENQUEUECOMMAND_ADDRESS 0x46E5F0
+typedef void(__cdecl* enqueueCommandF_t)(uint32_t, uint64_t const *, void*); //last void is their unicode string object as parameters
+enqueueCommandF_t clientCommandQueueEnqueue = (enqueueCommandF_t)CLIENTCOMMANDQUEUE_ENQUEUECOMMAND_ADDRESS;
+
+void* emptyUnicodeString = (void*) 0x01918970; /* useful for above */
+
 ///
 ///
 
@@ -142,7 +168,7 @@ internalRadialFloraSlider radialFloraSlider = (internalRadialFloraSlider)RADIAL_
 // it's the last type of command checked, which means we know most others
 // have gotten a chance to be processed before us.
 #define COMMAND_HANDLER_ADDRESS 0x9FF6F0   
-char(__cdecl* originalCommandHandler)(int, int, int, int);
+char(__cdecl* originalCommandHandler)(int, int, int, int) = (char(__cdecl*)(int, int, int, int))(COMMAND_HANDLER_ADDRESS);
 
 char hkCommandHandler(int a1, int a2, int a3, int a4)
 {
@@ -309,7 +335,72 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 		{
 			wstring &command = afterSlash;
 
-			if (command == L"getradialflora")
+			if (command == L"assist2")
+			{
+				CreatureObject* creature = gameGetPlayerCreature();
+				auto lookAtTarget = creature->getLookAtTarget();
+				Object* obj = lookAtTarget ? lookAtTarget->getObject() : NULL;
+
+				if (obj) {
+#ifndef NDEBUG
+					echo("obj not null");
+#endif
+					CreatureObject* creo = obj->asCreatureObject();
+
+					if (creo) {
+#ifndef NDEBUG
+						echo("creo not null");
+#endif
+						auto newLookAtTarget = creo->getLookAtTarget();
+						Object* newTargetObject = newLookAtTarget ? newLookAtTarget->getObject() : NULL;
+
+						if (newTargetObject) {
+#ifndef NDEBUG
+							echo("newTargetObject not null");
+#endif
+							clientCommandQueueEnqueue(stlportstring::hashCode("target"), &newTargetObject->getObjectID(), emptyUnicodeString);
+						}
+					}
+				}
+
+				handled = 1;
+			}
+			if (command == L"getcurrenthealth")
+			{ 
+				CreatureObject* creature = gameGetPlayerCreature();
+				PlayerObject* playerObject = gameGetPlayerObject();
+				stlportstring strval;
+
+				getLanguageSpeakSkillModName(2, strval);
+
+				if (creature)
+				{
+					int healthValue = creature->getAttribute(CreatureObject::Health);
+					bool val1 = playerObject->speaksLanguage(1);
+					bool val2 = playerObject->speaksLanguage(2);
+					uint64_t creoOID = creature->getObjectID();
+					uint64_t playOID = playerObject->getObjectID();
+					ClientObject* ghost = creature->getEquippedObject("ghost");
+					int checkVal = playOID == ghost->getObjectID();
+					auto lookAtTarget = creature->getLookAtTarget();
+					uint64_t targetOID = lookAtTarget ? lookAtTarget->getObjectID() : 0;
+					
+					char message[128];
+					sprintf_s(message, sizeof(message), "Your current health is: %d %s %d %d %lld %lld %d target: %lld", 
+						healthValue, strval.c_str(), val1, val2, creoOID, playOID, checkVal, targetOID);
+
+					echo(message);
+
+					//clientCommandQueueEnqueue(stlportstring::hashCode("target"), &creature->getObjectID(), emptyUnicodeString);
+				}
+				else
+				{
+					echo("Main Player CreatureObject is null");
+				}
+
+				handled = true;
+			}
+			else if (command == L"getradialflora")
 			{
 				double radialDist = getRadialFloraDistance();
 				string radialDistString = to_string(radialDist);
@@ -374,19 +465,39 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 {
 	switch (dwReason)
 	{
-	case DLL_PROCESS_ATTACH:
+	case DLL_PROCESS_ATTACH: {
+		DetourRestoreAfterWith();
+
+		DetourTransactionBegin();
+		DetourUpdateThread(GetCurrentThread());
 
 		// Direct function hooks.
-		originalCommandHandler = (char(__cdecl*)(int, int, int, int))DetourFunction((PBYTE)COMMAND_HANDLER_ADDRESS, (PBYTE)hkCommandHandler);
+		DetourAttach((PVOID*)(&originalCommandHandler), (PVOID)hkCommandHandler);
+		LONG errorCode = DetourTransactionCommit();
 
-		// Mid-function hooks for global detail and high detail terrain distance.
-		writeJmp((BYTE*)terrainDistJmpAddress, (DWORD)terrainDistanceSliderHook, 5);
-		writeJmp((BYTE*)globalDetailJmpAddress, (DWORD)globalDetailSliderHook, 5);
+		if (errorCode == NO_ERROR) {
+			//Detour successful
+			// Mid-function hooks for global detail and high detail terrain distance.
+			writeJmp((BYTE*)terrainDistJmpAddress, (DWORD)terrainDistanceSliderHook, 5);
+			writeJmp((BYTE*)globalDetailJmpAddress, (DWORD)globalDetailSliderHook, 5);
 
-		// Show our loaded message (only displays if chat is already present).
-		echo("[LOADED] Settings Override Extensions by N00854180T");
-		echo("Use /exthelp for details on extension command usage.");
+			// Show our loaded message (only displays if chat is already present).
+			echo("[LOADED] Settings Override Extensions by N00854180T");
+			echo("Use /exthelp for details on extension command usage.");
+		}
+		else {
+			echo("[LOAD] FAILED");
+		}
 
+		break;
+	}
+	case DLL_PROCESS_DETACH:
+		DetourTransactionBegin();
+		DetourUpdateThread(GetCurrentThread());
+
+		DetourDetach((PVOID*)(&originalCommandHandler), (PVOID)hkCommandHandler);
+
+		DetourTransactionCommit();
 		break;
 	}
 
