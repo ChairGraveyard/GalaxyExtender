@@ -285,6 +285,20 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 
 				handled = true;
 			}
+			else if (command == L"lua")
+			{
+				if (lua)
+					lua->ExecuteString(ws2s(args[1]).c_str());
+
+				handled = true;
+			}
+			else if (command == L"luaf")
+			{
+				if (lua)
+					lua->ExecuteFile(ws2s(args[1]).c_str());
+
+				handled = true;
+			}
 
 			// Check for other commands
 		}
