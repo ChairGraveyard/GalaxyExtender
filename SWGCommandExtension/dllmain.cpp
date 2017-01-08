@@ -1,24 +1,26 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "stdafx.h"
 
-#include "utility.h"
-#include "LuaEngine.h"
-
-#include "CreatureObject.h"
-
 #include <windows.h>
 #include <detours.h>
 #include <iostream>
 #include <iterator>
+#include <string>
+#include <vector>
 
+#include "utility.h"
+#include "CreatureObject.h"
+#include "PlayerObject.h"
 
-#include "LuaBridge\LuaBridge.h"
+#include "LuaEngine.h" 
+#include "LuaBridge\LuaBridge.h" 
 
 using namespace std;
+using namespace luabridge;
 
-/// Lua Related
+/// Lua Related 
 static LuaEngine* lua = NULL;
-///
+/// 
 
 /// Mid-Function Hooks
 ///
@@ -54,6 +56,8 @@ __declspec(naked) void terrainDistanceSliderHook()
 ///
 ///
 
+class CreatureObject;
+
 /// Direct Internal Functions
 ///
 ///
@@ -82,7 +86,6 @@ internalNonCollidableFloraSlider nonCollidableFloraSlider = (internalNonCollidab
 typedef float(__cdecl* internalRadialFloraSlider)(float);
 internalRadialFloraSlider radialFloraSlider = (internalRadialFloraSlider)RADIAL_FLORA_ADDRESS;
 
-
 #define GAME_GETPLAYER_ADDRESS 0x425140
 typedef void*(__cdecl* internalGameGetPlayer)();
 internalGameGetPlayer gameGetPlayer = (internalGameGetPlayer)GAME_GETPLAYER_ADDRESS; /* this returns the main player from the Game, usually its a CreatureObject*/
@@ -92,8 +95,18 @@ typedef CreatureObject*(__cdecl* internalGameGetPlayerCreature)();
 internalGameGetPlayerCreature gameGetPlayerCreature = (internalGameGetPlayerCreature)GAME_GETPLAYERCREATURE_ADDRESS; /* this returns the main CreatureObject from the Game*/
 
 #define GAME_GETPLAYEROBJECT_ADDRESS 0x425180
-typedef void*(__cdecl* internalGameGetPlayerObject)();
+typedef PlayerObject*(__cdecl* internalGameGetPlayerObject)();
 internalGameGetPlayerObject gameGetPlayerObject = (internalGameGetPlayerObject)GAME_GETPLAYEROBJECT_ADDRESS; /* this returns the main PlayerObject (ghost from CreatureObject) from the Game*/
+
+#define GAMELANGUAGEMANAGER_GETLANGUAGESPEAKSKILLMODNAME_ADDRESS 0x011C6270
+typedef void(__cdecl* getLanguageSpeakSkillModName_t)(const int, stlportstring&);
+getLanguageSpeakSkillModName_t getLanguageSpeakSkillModName = (getLanguageSpeakSkillModName_t)GAMELANGUAGEMANAGER_GETLANGUAGESPEAKSKILLMODNAME_ADDRESS;
+
+#define CLIENTCOMMANDQUEUE_ENQUEUECOMMAND_ADDRESS 0x46E5F0
+typedef void(__cdecl* enqueueCommandF_t)(uint32_t, uint64_t const *, void*); //last void is their unicode string object as parameters
+enqueueCommandF_t clientCommandQueueEnqueue = (enqueueCommandF_t)CLIENTCOMMANDQUEUE_ENQUEUECOMMAND_ADDRESS;
+
+void* emptyUnicodeString = (void*)0x01918970; /* useful for above */
 
 ///
 ///
@@ -105,15 +118,14 @@ internalGameGetPlayerObject gameGetPlayerObject = (internalGameGetPlayerObject)G
 ///
 ///
 
-
 /// Direct Hooks
 ///
-// Technically this isn't THE command handler, it's just the handler
-// for language commands, moods, etc., but it works for our case as 
+// Technically this isn't the command handler, it's just the handler
+// for language commands, moods, etc., but it's perfect for our case as 
 // it's the last type of command checked, which means we know most others
 // have gotten a chance to be processed before us.
 #define COMMAND_HANDLER_ADDRESS 0x9FF6F0   
-char(__cdecl* originalCommandHandler)(int, int, int, int);
+char(__cdecl* originalCommandHandler)(int, int, int, int) = (char(__cdecl*)(int, int, int, int))(COMMAND_HANDLER_ADDRESS);
 
 char hkCommandHandler(int a1, int a2, int a3, int a4)
 {
@@ -149,7 +161,7 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 				globalDetailOverrideValue = newVal;
 
 				// Tell the user to slide the slider to make the override take effect.				
-				echo(("Global Detail Level set to " + to_string(newVal) + "! However, this setting will not take effect until you open the Options, click the Terrain tab, and move the Global Detail Level slider.").c_str());
+				echo("Global Detail Level changed! However, this setting will not take effect until you open the Options, click the Terrain tab, and move the Global Detail Level slider.");
 
 				handled = true;
 			}
@@ -160,7 +172,7 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 				terrainDistanceOverrideValue = newVal;
 
 				// Tell the user to slide the slider to make the override take effect.												
-				echo(("High Detail Terrain Distance set to " + to_string(newVal) + "! However, this setting will not take effect until you open the Options, click the Terrain tab, and move the High Detail Terrain Distance slider.").c_str());
+				echo("High Detail Terrain Distance changed! However, this setting will not take effect until you open the Options, click the Terrain tab, and move the High Detail Terrain Distance slider.");
 
 				handled = true;
 			}
@@ -169,7 +181,7 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 				float newVal = stof(args[1]);
 				radialFloraSlider(newVal);
 
-				echo(("Radial Flora distance set to " + to_string(newVal)).c_str());
+				echo("Radial Flora distance set.");
 
 				handled = true;
 			}
@@ -178,7 +190,7 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 				float newVal = stof(args[1]);
 				nonCollidableFloraSlider(newVal);
 
-				echo(("Non-Collidable Flora distance set to " + to_string(newVal)).c_str());
+				echo("Non-Collidable Flora distance set.");
 
 				handled = true;
 			}
@@ -191,7 +203,7 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 
 				(*viewDistance) = newVal;
 
-				echo(("View distance distance set to " + to_string(newVal)).c_str());
+				echo("View distance distance set.");
 
 				handled = true;
 			}
@@ -273,20 +285,6 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 
 				handled = true;
 			}
-			else if (command == L"lua")
-			{
-				if (lua)
-					lua->ExecuteString(ws2s(args[1]).c_str());
-
-				handled = true;
-			}
-			else if (command == L"luaf")
-			{
-				if (lua)
-					lua->ExecuteFile(ws2s(args[1]).c_str());
-
-				handled = true;
-			}
 
 			// Check for other commands
 		}
@@ -294,18 +292,89 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 		{
 			wstring &command = afterSlash;
 
-			if (command == L"getradialflora")
+			if (command == L"assist2")
+			{
+				CreatureObject* creature = gameGetPlayerCreature();
+				auto lookAtTarget = creature->getLookAtTarget();
+				Object* obj = lookAtTarget ? lookAtTarget->getObject() : NULL;
+
+				if (obj) {
+#ifndef NDEBUG
+					echo("obj not null");
+#endif
+					CreatureObject* creo = obj->asCreatureObject();
+
+					if (creo) {
+#ifndef NDEBUG
+						echo("creo not null");
+#endif
+						auto newLookAtTarget = creo->getLookAtTarget();
+						Object* newTargetObject = newLookAtTarget ? newLookAtTarget->getObject() : NULL;
+
+						if (newTargetObject) {
+#ifndef NDEBUG
+							echo("newTargetObject not null");
+#endif
+							clientCommandQueueEnqueue(stlportstring::hashCode("target"), &newTargetObject->getObjectID(), emptyUnicodeString);
+						}
+					}
+				}
+
+				handled = 1;
+			}
+			if (command == L"getcurrenthealth")
+			{
+				CreatureObject* creature = gameGetPlayerCreature();
+				PlayerObject* playerObject = gameGetPlayerObject();
+				stlportstring strval;
+
+				getLanguageSpeakSkillModName(2, strval);
+
+				if (creature)
+				{
+					int healthValue = creature->getAttribute(CreatureObject::Health);
+					bool val1 = playerObject->speaksLanguage(1);
+					bool val2 = playerObject->speaksLanguage(2);
+					uint64_t creoOID = creature->getObjectID();
+					uint64_t playOID = playerObject->getObjectID();
+					ClientObject* ghost = creature->getEquippedObject("ghost");
+					int checkVal = playOID == ghost->getObjectID();
+					auto lookAtTarget = creature->getLookAtTarget();
+					uint64_t targetOID = lookAtTarget ? lookAtTarget->getObjectID() : 0;
+
+					char message[128];
+					sprintf_s(message, sizeof(message), "Your current health is: %d %s %d %d %lld %lld %d target: %lld",
+						healthValue, strval.c_str(), val1, val2, creoOID, playOID, checkVal, targetOID);
+
+					echo(message);
+
+					//clientCommandQueueEnqueue(stlportstring::hashCode("target"), &creature->getObjectID(), emptyUnicodeString);
+				}
+				else
+				{
+					echo("Main Player CreatureObject is null");
+				}
+
+				handled = true;
+			}
+			else if (command == L"getradialflora")
 			{
 				double radialDist = getRadialFloraDistance();
-				echo(("Radial Flora Distance: " + to_string(radialDist)).c_str());
+				string radialDistString = to_string(radialDist);
+
+				echo("Radial Flora Distance: ");
+				echo(radialDistString.c_str());
 
 				handled = true;
 			}
 			else if (command == L"getnoncollidableflora" || command == L"getncflora")
 			{
 				double ncDist = getNonCollidableFloraDistance();
-				echo(("Non-Collidable Flora Distance: " + to_string(ncDist)).c_str());
-				
+				string ncDistString = to_string(ncDist);
+
+				echo("Non-Collidable Flora Distance: ");
+				echo(ncDistString.c_str());
+
 				handled = true;
 			}
 			else if (command == L"getviewdistance" || command == L"getvd")
@@ -314,7 +383,8 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 				float* viewDistance = (float*)((*viewDistBase) + VIEW_DISTANCE_OFFSET);
 				string viewDistString = to_string((*viewDistance));
 
-				echo(("View/Rendering Distance: " + viewDistString).c_str());				
+				echo("View/Rendering Distance: ");
+				echo(viewDistString.c_str());
 
 				handled = true;
 			}
@@ -334,29 +404,6 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 
 				handled = true;
 			}
-			else if (command == L"getcurrenthealth")
-			{
-				CreatureObject* creature = gameGetPlayerCreature();
-
-				if (creature)
-					echo(string("Your current health is: " + to_string(creature->getAttribute(CreatureObject::Health))).c_str());			
-				else
-					echo("Main Player CreatureObject is null");				
-
-				handled = true;
-			}
-			else if (command == L"getcurrentlocation" || command == L"getloc")
-			{
-				CreatureObject* creature = gameGetPlayerCreature();
-
-				if (creature)											
-					echo(string("Your location is: " + to_string(creature->getXLocation()) + " " + to_string(creature->getZLocation())).c_str());
-				else
-					echo("Main Player CreatureObject is null");
-
-				handled = true;
-			}
-
 		}
 
 	}
@@ -371,37 +418,54 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 ///
 ///
 
-
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 {
 	switch (dwReason)
 	{
-	case DLL_PROCESS_ATTACH:
+	case DLL_PROCESS_ATTACH: {
+		DetourRestoreAfterWith();
+
+		DetourTransactionBegin();
+		DetourUpdateThread(GetCurrentThread());
 
 		// Direct function hooks.
-		originalCommandHandler = (char(__cdecl*)(int, int, int, int))DetourFunction((PBYTE)COMMAND_HANDLER_ADDRESS, (PBYTE)hkCommandHandler);		
-		
-		// Mid-function hooks for global detail and high detail terrain distance.
-		writeJmp((BYTE*)terrainDistJmpAddress, (DWORD)terrainDistanceSliderHook, 5);
-		writeJmp((BYTE*)globalDetailJmpAddress, (DWORD)globalDetailSliderHook, 5);
+		DetourAttach((PVOID*)(&originalCommandHandler), (PVOID)hkCommandHandler);
+		LONG errorCode = DetourTransactionCommit();
 
-		// Show our loaded message (only displays if chat is already present).
-		echo("[LOADED] GalaxyExtender by N00854180T");
-		echo("Use /exthelp for details on extension command usage.");
+		if (errorCode == NO_ERROR) {
+			//Detour successful
+			// Mid-function hooks for global detail and high detail terrain distance.
+			writeJmp((BYTE*)terrainDistJmpAddress, (DWORD)terrainDistanceSliderHook, 5);
+			writeJmp((BYTE*)globalDetailJmpAddress, (DWORD)globalDetailSliderHook, 5);
+			// Register other internal classes for Lua use here. 
+			if (lua)
+				CreatureObject::register_lua(lua->L());
 
-		// Load Lua Engine
-		lua = new LuaEngine();
+			// Global lua functions
+			getGlobalNamespace(lua->L()).addFunction("echo", echo);
+			getGlobalNamespace(lua->L()).addFunction("gameGetPlayerCreature", gameGetPlayerCreature);
+			getGlobalNamespace(lua->L()).addFunction("gameGetPlayer", gameGetPlayer);
+			getGlobalNamespace(lua->L()).addFunction("gameGetPlayerObject", gameGetPlayerObject);
+			getGlobalNamespace(lua->L()).addFunction("getLanguageSpeakSkillModName", getLanguageSpeakSkillModName);
+			getGlobalNamespace(lua->L()).addFunction("clientCommandQueueEnqueue", clientCommandQueueEnqueue);			
+				
+			// Show our loaded message (only displays if chat is already present).
+			echo("[LOADED] GalaxyExtender");
+			echo("Use /exthelp for details on extension command usage.");
+		}
+		else {
+			echo("[LOAD] GalaxyExtender - FAILED");
+		}
 
-		// Register other internal classes for Lua use here.
-		if (lua)
-			CreatureObject::register_lua(lua->L());		
+		break;
+	}
+	case DLL_PROCESS_DETACH:
+		DetourTransactionBegin();
+		DetourUpdateThread(GetCurrentThread());
 
-		luabridge::getGlobalNamespace(lua->L()).addFunction("echo", echo);
+		DetourDetach((PVOID*)(&originalCommandHandler), (PVOID)hkCommandHandler);
 
-		luabridge::getGlobalNamespace(lua->L()).addFunction("gameGetPlayerCreature", gameGetPlayerCreature);
-		luabridge::getGlobalNamespace(lua->L()).addFunction("gameGetPlayer", gameGetPlayer);
-		luabridge::getGlobalNamespace(lua->L()).addFunction("gameGetPlayerObject", gameGetPlayerObject);
-		
+		DetourTransactionCommit();
 		break;
 	}
 

@@ -1,12 +1,12 @@
 #pragma once
 
 #include "TangibleObject.h"
+#include "CachedNetworkId.h"
 
-#include "utility.h"
+#include <vector>
 
+#include "LuaEngine.h"
 #include "LuaBridge\LuaBridge.h"
-
-
 
 //complete size 0x9B8
 class CreatureObject : public TangibleObject {
@@ -31,13 +31,13 @@ public:
 		return getAttributesArray()[i];
 	}
 
-	const std::vector<int>& getAttributesArray() const {
+	const int* getAttributesArray() const {
 		/* relative address of the vector storing the attributes, its inside another class AutoDeltaVector */
-		return getMemoryReference<std::vector<int> >(0x410);
+		return getMemoryReference<int* >(0x410);
 	}
 
-	std::vector<int>& getAttributesArray() {
-		return getMemoryReference<std::vector<int> >(0x410);
+	int* getAttributesArray() {
+		return getMemoryReference<int* >(0x410);
 	}
 
 	bool CreatureObject::isRidingMount() {
@@ -54,25 +54,32 @@ public:
 		return (stateBitmask & (1i64 << state)) != 0;
 	}
 
+	ClientObject* getEquippedObject(const char* slotName) {
+#ifdef USEJUMPTOCLIENTHACK
+		JUMPTOCLIENT(0x431970);
+#else
+		return ThisCall<0x431970, ClientObject*, decltype(this), const char*>::run(this, slotName);
+#endif
+	}
+
+	CachedNetworkId* getLookAtTarget() {
+		return &getMemoryReference<CachedNetworkId>(0x598);
+	}
+
+	void setState(int8_t state, bool value) {
+#ifdef USEJUMPTOCLIENTHACK
+		JUMPTOCLIENT(0x4352C0);
+#else
+		ThisCall<0x4352C0, void, decltype(this)>::run(this);
+#endif
+	}
+
 	int8_t getVisualPosture() const {
 		return getMemoryReference<int8_t>(0x3D4);
 	}
 
 	int8_t getServerPosture() const {
 		return getMemoryReference<int8_t>(0x3EC);
-	}	
-	
-	// TODO: Replace with nice Point3F, MatrixF for convenience & calculations.
-	float getXLocation() const {
-		return getMemoryReference<float>(0x5C);
-	}	
-	
-	float getYLocation() const {
-		return getMemoryReference<float>(0x6C);
-	}
-
-	float getZLocation() const {
-		return getMemoryReference<float>(0x7C);
 	}
 
 	bool isSittingOnObject() const {
@@ -84,21 +91,43 @@ public:
 	}
 
 	void setVisualPosture(int8_t posture) {
+#ifdef USEJUMPTOCLIENTHACK
 		JUMPTOCLIENT(0x4328D0);
+#else
+		ThisCall<0x4328D0, void, decltype(this), int8_t>::run(this, posture);
+#endif
+	}
+
+	void requestServerPostureChange(int8_t posture) {
+#ifdef USEJUMPTOCLIENTHACK
+		JUMPTOCLIENT(0x432860);
+#else
+		ThisCall<0x432860, void, decltype(this), int8_t>::run(this, posture);
+#endif
 	}
 
 	static void register_lua(lua_State* L)
 	{
 		using namespace luabridge;
-		getGlobalNamespace(L) //global namespace to lua
-			.beginNamespace("Game") //our defined namespace (w.e we want to call it)
-			.beginClass<CreatureObject>("CreatureObject") //define class object
-			.addConstructor<void(*)(void)>() //reg. empty constructor
-			.addFunction("getMood", &CreatureObject::getMood) 
+		getGlobalNamespace(L) //global namespace to lua 
+			.beginNamespace("Game") //our defined namespace (w.e we want to call it) 
+			.beginClass<CreatureObject>("CreatureObject") //define class object 
+			.addConstructor<void(*)(void)>() //reg. empty constructor 
+			.addFunction("getMood", &CreatureObject::getMood)
 			.addFunction("getAttribute", &CreatureObject::getAttribute)
-			.endClass() //end class
-			.endNamespace(); //end namespace		
+			.addFunction("setAttribute", &CreatureObject::setAttribute)			
+			.addFunction("isRidingMount", &CreatureObject::isRidingMount)
+			.addFunction("isSittingOnObject", &CreatureObject::isSittingOnObject)
+			.addFunction("setSittingOnObject", &CreatureObject::setSittingOnObject)
+			.addFunction("getServerPosture", &CreatureObject::getServerPosture)
+			.addFunction("requestServerPostureChange", &CreatureObject::requestServerPostureChange)
+			.addFunction("getVisualPosture", &CreatureObject::getVisualPosture)
+			.addFunction("setVisualPosture", &CreatureObject::setVisualPosture)			
+			.addFunction("getLookAtTarget", &CreatureObject::getLookAtTarget)
+			.addFunction("getEquippedObject", &CreatureObject::getEquippedObject)
+			.addFunction("getState", &CreatureObject::getState)
+			.addFunction("setState", &CreatureObject::setState)				
+			.endClass() //end class 
+			.endNamespace(); //end namespace
 	}
 };
-
-

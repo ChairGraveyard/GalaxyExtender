@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "lua.hpp" //needed for Lua
+#include <lua.hpp> //needed for Lua
 
 /************************************************************************/
 /*  LuaEngine class
