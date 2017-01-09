@@ -2,6 +2,7 @@
 
 #include "TangibleObject.h"
 #include "CachedNetworkId.h"
+#include "Point.h"
 
 #include <vector>
 
@@ -110,6 +111,11 @@ public:
 #else
 		ThisCall<0x432860, void, decltype(this), int8_t>::run(this, posture);
 #endif
+	}
+
+	Point3F getPosition() const
+	{
+		return Point3F(getMemoryReference<float>(0x5C), getMemoryReference<float>(0x6C), getMemoryReference<float>(0x7C));
 	}
 
 	static void register_lua(lua_State* L)
