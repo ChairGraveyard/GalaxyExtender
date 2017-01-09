@@ -27,6 +27,12 @@ public:
 		getAttributesArray()[i] = value;
 	}
 
+	// LuaBridge doesn't like enums
+	int getAttr(int i)
+	{
+		return getAttributesArray()[i];
+	}
+
 	int getAttribute(Attribute i) const {
 		return getAttributesArray()[i];
 	}
@@ -114,11 +120,11 @@ public:
 			.beginClass<CreatureObject>("CreatureObject") //define class object 
 			.addConstructor<void(*)(void)>() //reg. empty constructor 
 			.addFunction("getMood", &CreatureObject::getMood)
-			.addFunction("getAttribute", &CreatureObject::getAttribute)
+			.addFunction("getAttribute", &CreatureObject::getAttr)
 			.addFunction("setAttribute", &CreatureObject::setAttribute)			
 			.addFunction("isRidingMount", &CreatureObject::isRidingMount)
 			.addFunction("isSittingOnObject", &CreatureObject::isSittingOnObject)
-			.addFunction("setSittingOnObject", &CreatureObject::setSittingOnObject)
+			.addFunction("setSittingOnObject", &CreatureObject::setSittingOnObject)	
 			.addFunction("getServerPosture", &CreatureObject::getServerPosture)
 			.addFunction("requestServerPostureChange", &CreatureObject::requestServerPostureChange)
 			.addFunction("getVisualPosture", &CreatureObject::getVisualPosture)

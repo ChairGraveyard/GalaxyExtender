@@ -78,7 +78,7 @@ public:
 		getGlobalNamespace(L) //global namespace to lua 
 			.beginNamespace("Game") //our defined namespace (w.e we want to call it) 
 			.beginClass<Object>("Object") //define class object 
-			.addConstructor<void(*)(void)>() //reg. empty constructor 
+			//.addConstructor<void(*)(void)>() //reg. empty constructor 
 			.addFunction("isCreatureObject", &Object::isCreatureObject)
 			.addFunction("asCreatureObject", &Object::asCreatureObject)			
 			.endClass() //end class 

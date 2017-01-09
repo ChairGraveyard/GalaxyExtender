@@ -37,7 +37,7 @@ public:
 		getGlobalNamespace(L) //global namespace to lua 
 			.beginNamespace("Game") //our defined namespace (w.e we want to call it) 
 			.beginClass<CachedNetworkId>("CachedNetworkId") //define class object 
-			.addConstructor<void(*)(void)>() //reg. empty constructor 
+			//.addConstructor<void(*)(void)>() //reg. empty constructor 
 			.addFunction("getObject", &CachedNetworkId::getObject)	
 			.addFunction("getObjectID", &CachedNetworkId::_getObjectID) // TODO: Figure out how to specify which function to use among overloaded ones.
 			.endClass() //end class 

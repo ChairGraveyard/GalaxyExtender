@@ -124,6 +124,15 @@ void lua_echo(const char* text)
 		echo(text);
 }
 
+int lua_getAttribute(int attr)
+{
+	CreatureObject* creature = gameGetPlayerCreature();
+	if (!creature)
+		return 0;
+
+	return creature->getAttribute((CreatureObject::Attribute)attr);
+}
+
 ///
 ///
 
@@ -483,12 +492,16 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 				TangibleObject::register_lua(lua->L());				
 
 				// Global lua functions
-				getGlobalNamespace(lua->L()).addFunction("echo", lua_echo);
+				getGlobalNamespace(lua->L()).addFunction("c_echo", lua_echo);
 				getGlobalNamespace(lua->L()).addFunction("gameGetPlayerCreature", gameGetPlayerCreature);
 				getGlobalNamespace(lua->L()).addFunction("gameGetPlayer", gameGetPlayer);
 				getGlobalNamespace(lua->L()).addFunction("gameGetPlayerObject", gameGetPlayerObject);
 				getGlobalNamespace(lua->L()).addFunction("doCommand", doCommand); // Use this wrapper function for clientCommandQueueEnqueue.
-				//getGlobalNamespace(lua->L()).addFunction("getLanguageSpeakSkillModName", getLanguageSpeakSkillModName); // Commented until stl wrapper strings are registered to lua.						
+
+				// Defines echo() for lua so that it's type-safe (to_string)
+				lua->ExecuteFile("client_lua.lua");
+
+				//getGlobalNamespace(lua->L()).addFunction("getLanguageSpeakSkillModName", getLanguageSpeakSkillModName); // Commented until stl wrapper strings are registered to lua.
 			}
 
 			// Show our loaded message (only displays if chat is already present).
