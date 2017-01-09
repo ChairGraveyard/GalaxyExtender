@@ -108,6 +108,22 @@ enqueueCommandF_t clientCommandQueueEnqueue = (enqueueCommandF_t)CLIENTCOMMANDQU
 
 void* emptyUnicodeString = (void*)0x01918970; /* useful for above */
 
+// Wrapper so that Lua can call clientCommandQueueEnqueue
+void doCommand(string command, Object* obj)
+{
+	uint64_t* objId = NULL;
+	if (obj)
+		objId = &obj->getObjectID();
+
+	clientCommandQueueEnqueue(stlportstring::hashCode(command.c_str()), objId, emptyUnicodeString);
+}
+
+void lua_echo(const char* text)
+{
+	if (text != NULL)
+		echo(text);
+}
+
 ///
 ///
 
@@ -404,7 +420,7 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 			}
 			else if (command == L"exthelp")
 			{
-				echo("[COMMAND HELP] Settings Override Extensions by N00854180T");
+				echo("[COMMAND HELP] GalaxyExtender");
 				echo("/globaldetail X - sets the Global Detail Level to X, valid ranges are 1-24. You must move the slider in Terrain options AFTER using this command.");
 				echo("<hdterrain|/highdetailterrain> X - sets the High Detail Terrain Distance to X, valid ranges are 1-50. You must move the slider in Terrain options AFTER using this command.");
 				echo("/radialflora X - sets the Radial Flora Distance to X, valid ranges are 1-256.");
@@ -452,17 +468,29 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 			writeJmp((BYTE*)terrainDistJmpAddress, (DWORD)terrainDistanceSliderHook, 5);
 			writeJmp((BYTE*)globalDetailJmpAddress, (DWORD)globalDetailSliderHook, 5);
 			// Register other internal classes for Lua use here. 
+			
+			// Load Lua Engine 
+			lua = new LuaEngine();
+			
 			if (lua)
+			{
+				CachedNetworkId::register_lua(lua->L());
+				ClientObject::register_lua(lua->L());
 				CreatureObject::register_lua(lua->L());
+				IntangibleObject::register_lua(lua->L());
+				Object::register_lua(lua->L());
+				PlayerObject::register_lua(lua->L());
+				TangibleObject::register_lua(lua->L());				
 
-			// Global lua functions
-			getGlobalNamespace(lua->L()).addFunction("echo", echo);
-			getGlobalNamespace(lua->L()).addFunction("gameGetPlayerCreature", gameGetPlayerCreature);
-			getGlobalNamespace(lua->L()).addFunction("gameGetPlayer", gameGetPlayer);
-			getGlobalNamespace(lua->L()).addFunction("gameGetPlayerObject", gameGetPlayerObject);
-			getGlobalNamespace(lua->L()).addFunction("getLanguageSpeakSkillModName", getLanguageSpeakSkillModName);
-			getGlobalNamespace(lua->L()).addFunction("clientCommandQueueEnqueue", clientCommandQueueEnqueue);			
-				
+				// Global lua functions
+				getGlobalNamespace(lua->L()).addFunction("echo", lua_echo);
+				getGlobalNamespace(lua->L()).addFunction("gameGetPlayerCreature", gameGetPlayerCreature);
+				getGlobalNamespace(lua->L()).addFunction("gameGetPlayer", gameGetPlayer);
+				getGlobalNamespace(lua->L()).addFunction("gameGetPlayerObject", gameGetPlayerObject);
+				getGlobalNamespace(lua->L()).addFunction("doCommand", doCommand); // Use this wrapper function for clientCommandQueueEnqueue.
+				//getGlobalNamespace(lua->L()).addFunction("getLanguageSpeakSkillModName", getLanguageSpeakSkillModName); // Commented until stl wrapper strings are registered to lua.						
+			}
+
 			// Show our loaded message (only displays if chat is already present).
 			echo("[LOADED] GalaxyExtender");
 			echo("Use /exthelp for details on extension command usage.");
@@ -480,6 +508,11 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 		DetourDetach((PVOID*)(&originalCommandHandler), (PVOID)hkCommandHandler);
 
 		DetourTransactionCommit();
+
+		delete lua;
+
+		lua = NULL;
+
 		break;
 	}
 

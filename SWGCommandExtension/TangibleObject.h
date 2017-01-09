@@ -19,4 +19,14 @@ public:
 		return getMemoryReference<int>(0x38C);
 	}
 
+	static void register_lua(lua_State* L)
+	{
+		using namespace luabridge;
+		getGlobalNamespace(L) //global namespace to lua 
+			.beginNamespace("Game") //our defined namespace (w.e we want to call it) 
+			.beginClass<TangibleObject>("TangibleObject") //define class object 
+			.addConstructor<void(*)(void)>() //reg. empty constructor 
+			.endClass() //end class 
+			.endNamespace(); //end namespace
+	}
 };
