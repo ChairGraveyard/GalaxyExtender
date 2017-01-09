@@ -28,7 +28,7 @@ namespace soe {
 		}
 
 		static storage_t* alloc(int objectCount) {
-			if (objectCount > 0x80) {
+			if ((objectCount * sizeof(storage_t)) > 0x80) {
 				static strallocator_t strallocator1 = (strallocator_t)SOEALLOCATOR_ADDRESS;
 
 				return (storage_t*)strallocator1(objectCount * sizeof(storage_t));
@@ -41,7 +41,7 @@ namespace soe {
 		}
 
 		static void free(storage_t* address, int objectCount) {
-			if (objectCount > 0x80) {
+			if ((objectCount * sizeof(storage_t)) > 0x80) {
 				static strdeallocator1_t deall1 = (strdeallocator1_t)STRDEALLOCATOR1_ADDRESS;
 				deall1(address);
 			}
@@ -99,7 +99,7 @@ namespace soe {
 		}
 
 		void destroyElement(int index) {
-			if (std::is_trivially_copyable<storage_t>::value) {
+			if (!std::is_trivially_copyable<storage_t>::value) {
 				(&(start[index]))->~storage_t();
 			}
 		}
