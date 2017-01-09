@@ -43,6 +43,7 @@ void split(const wstring& s, wchar_t delim, vector<wstring>& v) {
 ///
 ///
 
+
 /// Memory Utilties
 ///
 void writeJmp(BYTE* address, DWORD jumpTo, DWORD length)
@@ -62,6 +63,18 @@ void writeJmp(BYTE* address, DWORD jumpTo, DWORD length)
 
 	VirtualProtect(address, length, oldProtect, &newProtect);
 }
+
+void writeBytes(BYTE* address, const BYTE* values, int size) {
+	DWORD oldProtect, newProtect;
+
+	VirtualProtect(address, size, PAGE_EXECUTE_READWRITE, &oldProtect);
+
+	memcpy(address, values, size);
+
+	VirtualProtect(address, size, oldProtect, &newProtect);
+}
+
+
 ///
 ///
 
@@ -142,15 +155,22 @@ typedef PlayerObject*(__cdecl* internalGameGetPlayerObject)();
 internalGameGetPlayerObject gameGetPlayerObject = (internalGameGetPlayerObject)GAME_GETPLAYEROBJECT_ADDRESS; /* this returns the main PlayerObject (ghost from CreatureObject) from the Game*/
 
 #define GAMELANGUAGEMANAGER_GETLANGUAGESPEAKSKILLMODNAME_ADDRESS 0x011C6270
-typedef void(__cdecl* getLanguageSpeakSkillModName_t)(const int, stlportstring&);
+typedef void(__cdecl* getLanguageSpeakSkillModName_t)(const int, soe::string&);
 getLanguageSpeakSkillModName_t getLanguageSpeakSkillModName = (getLanguageSpeakSkillModName_t)GAMELANGUAGEMANAGER_GETLANGUAGESPEAKSKILLMODNAME_ADDRESS;
 
 #define CLIENTCOMMANDQUEUE_ENQUEUECOMMAND_ADDRESS 0x46E5F0
-typedef void(__cdecl* enqueueCommandF_t)(uint32_t, uint64_t const *, void*); //last void is their unicode string object as parameters
+typedef void(__cdecl* enqueueCommandF_t)(uint32_t, uint64_t const *, soe::unicode*); //last void is their unicode string object as parameters
 enqueueCommandF_t clientCommandQueueEnqueue = (enqueueCommandF_t)CLIENTCOMMANDQUEUE_ENQUEUECOMMAND_ADDRESS;
 
-void* emptyUnicodeString = (void*) 0x01918970; /* useful for above */
+soe::unicode* emptyUnicodeString = (soe::unicode*) 0x01918970; /* useful for above */
 
+#define CUIFACTORY_GET_ADDRESS 0x00883FB0
+typedef Object*(__cdecl* cuiFactoryGet_t)(const char*, bool); 
+cuiFactoryGet_t cuiFactoryGet = (cuiFactoryGet_t)CUIFACTORY_GET_ADDRESS;
+
+#define CUIFACTORY_ACTIVATE_ADDRESS 0x008840D0
+typedef Object*(__cdecl* cuiFactoryActivate_t)(const char*, const char*, bool);
+cuiFactoryActivate_t cuiFactoryActivate = (cuiFactoryActivate_t)CUIFACTORY_ACTIVATE_ADDRESS;
 ///
 ///
 
@@ -169,6 +189,26 @@ void* emptyUnicodeString = (void*) 0x01918970; /* useful for above */
 // have gotten a chance to be processed before us.
 #define COMMAND_HANDLER_ADDRESS 0x9FF6F0   
 char(__cdecl* originalCommandHandler)(int, int, int, int) = (char(__cdecl*)(int, int, int, int))(COMMAND_HANDLER_ADDRESS);
+
+#define LOGINSCREEN_ACTIVATE 0xC8D190
+typedef void(__thiscall* loginScreenActivate_t)(void*);
+loginScreenActivate_t originalLoginScreenActivateObject = (loginScreenActivate_t)LOGINSCREEN_ACTIVATE; //i patch this one on startup, no hooks needed
+
+#define LOGINSCREEN_BUTTON_PRESSED 0xC8D460
+typedef void(__thiscall* loginScreenOnButtonPressed_t)(void*, void*);
+loginScreenOnButtonPressed_t originalLoginScreenOnButtonPressedObject = (loginScreenOnButtonPressed_t)LOGINSCREEN_BUTTON_PRESSED;
+
+#define GAME_APPLICATION_ADDRES 0x01908858
+
+void __fastcall hkLoginScreenOnButtonPressed(Object* thisPointer, void* unused, void* uicontext) {
+	/*char message[128];
+	int* gameType = (int*)GAME_APPLICATION_ADDRES;
+
+	sprintf_s(message, "this:%p uicontext:%p applicationType:%d", thisPointer, uicontext, *gameType);
+	OutputDebugStringA(message);*/
+
+	originalLoginScreenOnButtonPressedObject(thisPointer, uicontext);
+}
 
 char hkCommandHandler(int a1, int a2, int a3, int a4)
 {
@@ -337,9 +377,20 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 
 			if (command == L"assist2")
 			{
+				Object* console = cuiFactoryGet("DebugInfoPage", true);
+
+				if (console != NULL) {
+					echo("activating console");
+
+					cuiFactoryActivate("DebugInfoPage", NULL, true);
+				}
+				else {
+					echo("could not find console in cui mediator");
+				}
+
 				CreatureObject* creature = gameGetPlayerCreature();
 				auto lookAtTarget = creature->getLookAtTarget();
-				Object* obj = lookAtTarget ? lookAtTarget->getObject() : NULL;
+				Object* obj = lookAtTarget.getObject();
 
 				if (obj) {
 #ifndef NDEBUG
@@ -352,13 +403,13 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 						echo("creo not null");
 #endif
 						auto newLookAtTarget = creo->getLookAtTarget();
-						Object* newTargetObject = newLookAtTarget ? newLookAtTarget->getObject() : NULL;
+						Object* newTargetObject = newLookAtTarget.getObject();
 
 						if (newTargetObject) {
 #ifndef NDEBUG
 							echo("newTargetObject not null");
 #endif
-							clientCommandQueueEnqueue(stlportstring::hashCode("target"), &newTargetObject->getObjectID(), emptyUnicodeString);
+							clientCommandQueueEnqueue(soe::string::hashCode("target"), &newTargetObject->getObjectID(), emptyUnicodeString);
 						}
 					}
 				}
@@ -369,12 +420,41 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 			{ 
 				CreatureObject* creature = gameGetPlayerCreature();
 				PlayerObject* playerObject = gameGetPlayerObject();
-				stlportstring strval;
+				soe::string strval = "testing";
+				soe::unicode unicodeTest = "testingUnicode";
+
+				soe::vector<soe::string> testingShit = { "hui ne boisia", "balsda", "asdjasd", "asoidhaoisf" };
+				testingShit.push_back("mdaaa");
+				testingShit.push_back("balsda");
+				testingShit.push_back("echostringtest");
+				testingShit.push_back("echostringtest2");
+				testingShit.push_back("echostringtest3");
+				testingShit.push_back("echostringtest4");
+				testingShit.push_back("echostringtest5");
+				testingShit.push_back("echostringtest6");
+				testingShit.push_back("echostringtest8");
+				
+				//testingShit.at(0) = strval;
 
 				getLanguageSpeakSkillModName(2, strval);
 
+				soe::string str2val = unicodeTest.toAscii();
+
+				testingShit.pop_back();
+
+				testingShit.push_back("newafterpop");
+
+				if ("testingUnicode" == str2val) {
+					str2val = "yaycompareworks";
+				}
+
+				soe::unicode testingTheEmptyOne = *emptyUnicodeString;
+
+
 				if (creature)
 				{
+					const soe::vector<int> atts = creature->getAttributesArray();
+					int attssize = atts.size();
 					int healthValue = creature->getAttribute(CreatureObject::Health);
 					bool val1 = playerObject->speaksLanguage(1);
 					bool val2 = playerObject->speaksLanguage(2);
@@ -383,11 +463,11 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 					ClientObject* ghost = creature->getEquippedObject("ghost");
 					int checkVal = playOID == ghost->getObjectID();
 					auto lookAtTarget = creature->getLookAtTarget();
-					uint64_t targetOID = lookAtTarget ? lookAtTarget->getObjectID() : 0;
+					uint64_t targetOID = lookAtTarget.getObjectID();
 					
-					char message[128];
-					sprintf_s(message, sizeof(message), "Your current health is: %d %s %d %d %lld %lld %d target: %lld", 
-						healthValue, strval.c_str(), val1, val2, creoOID, playOID, checkVal, targetOID);
+					char message[256];
+					sprintf_s(message, sizeof(message), "Your current health is: %d %s %s %s %d %d %lld %lld %d target: %lld %d", 
+						healthValue, strval.c_str(), str2val.c_str(), testingShit.at(12).c_str(), val1, val2, creoOID, playOID, checkVal, targetOID, atts.size());
 
 					echo(message);
 
@@ -473,14 +553,19 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 
 		// Direct function hooks.
 		DetourAttach((PVOID*)(&originalCommandHandler), (PVOID)hkCommandHandler);
+		DetourAttach((PVOID*)(&originalLoginScreenOnButtonPressedObject), (PVOID)hkLoginScreenOnButtonPressed);
+
 		LONG errorCode = DetourTransactionCommit();
 
 		if (errorCode == NO_ERROR) {
 			//Detour successful
+
+			const BYTE newData[7] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+			writeBytes((BYTE*)0xC8D258, newData, 7);
 			// Mid-function hooks for global detail and high detail terrain distance.
 			writeJmp((BYTE*)terrainDistJmpAddress, (DWORD)terrainDistanceSliderHook, 5);
 			writeJmp((BYTE*)globalDetailJmpAddress, (DWORD)globalDetailSliderHook, 5);
-
+						
 			// Show our loaded message (only displays if chat is already present).
 			echo("[LOADED] Settings Override Extensions by N00854180T");
 			echo("Use /exthelp for details on extension command usage.");

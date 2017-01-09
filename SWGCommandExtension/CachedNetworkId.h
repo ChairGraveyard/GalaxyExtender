@@ -7,10 +7,16 @@
 
 class CachedNetworkId {
 protected:
-	uint64_t oid;
-	Object* data;
+	uint64_t oid = 0;
+
+	/*different Bla<Object>*/
+	uint32_t* possibleVtable = nullptr;
+	Object* data = nullptr;
 
 public:
+	CachedNetworkId() = default;
+	CachedNetworkId(const CachedNetworkId&) = default;
+
 	Object* getObject() {
 #ifdef USEJUMPTOCLIENTHACK
 		JUMPTOCLIENT(0xB30160);

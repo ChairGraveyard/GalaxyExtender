@@ -32,10 +32,16 @@ public:
 		static client_func_t func = (client_func_t)FunctionAddress;
 		return func(thisPointer, args...);
 	}
+
+	static inline Return runVirtual(This thisPointer, ArgumentTypes ... args) {
+		uint32_t* vtable = *(uint32_t**)thisPointer;
+		client_func_t func = (client_func_t)(vtable[(FunctionAddress / sizeof(uint32_t*))]);
+		return func(thisPointer, args...);
+	}
 };
 
 class Object {
-protected:
+public:
 	template<typename T>
 	const T& getMemoryReference(int offset) const {
 		return *reinterpret_cast<T*>(reinterpret_cast<uint32_t>(this) + offset);
@@ -46,7 +52,16 @@ protected:
 		return *reinterpret_cast<T*>(reinterpret_cast<uint32_t>(this) + offset);
 	}
 
-public:
+	template<uint32_t FunctionAddress, typename Return, typename ... ArgumentTypes>
+	Return runMethod(ArgumentTypes ... args) {
+		return ThisCall<FunctionAddress, Return, Object*, ArgumentTypes...>::run(this, args...);
+	}
+
+	template<uint32_t VirtualOffset, typename Return, typename ... ArgumentTypes>
+	Return runVirtual(ArgumentTypes ... args) {
+		return ThisCall<VirtualOffset, Return, Object*, ArgumentTypes...>::runVirtual(this, args...);
+	}
+
 	uint64_t& getObjectID() {
 		return getMemoryReference<uint64_t>(0x20);
 	}

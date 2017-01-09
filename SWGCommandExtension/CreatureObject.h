@@ -2,6 +2,7 @@
 
 #include "TangibleObject.h"
 #include "CachedNetworkId.h"
+#include "soewrappers.h"
 
 #include <vector>
 
@@ -20,32 +21,24 @@ public:
 		//address is 0042ECF0
 	}
 
-	void setAttribute(Attribute i, int value) {
-		getAttributesArray()[i] = value;
-	}
-
 	int getAttribute(Attribute i) const {
 		return getAttributesArray()[i];
 	}
 
-	const int* getAttributesArray() const {
+	const soe::vector<int>& getAttributesArray() const {
 		/* relative address of the vector storing the attributes, its inside another class AutoDeltaVector */
-		return getMemoryReference<int* >(0x410);
+		return getMemoryReference<soe::vector<int> >(0x410);
 	}
 
-	int* getAttributesArray() {
-		return getMemoryReference<int* >(0x410);
-	}
-
-	bool CreatureObject::isRidingMount() {
+	bool CreatureObject::isRidingMount() const {
 		return getMemoryReference<bool>(0x98D);
 	}
 
-	uint8_t getMood() {
+	uint8_t getMood() const {
 		return getMemoryReference<uint8_t>(0x8D0);
 	}
 
-	bool getState(uint8_t state) {
+	bool getState(uint8_t state) const {
 		uint64_t stateBitmask = getMemoryReference<uint64_t>(0x758);
 
 		return (stateBitmask & (1i64 << state)) != 0;
@@ -59,15 +52,15 @@ public:
 #endif
 	}
 
-	CachedNetworkId* getLookAtTarget() {
-		return &getMemoryReference<CachedNetworkId>(0x598);
+	CachedNetworkId& getLookAtTarget() {
+		return getMemoryReference<CachedNetworkId>(0x598);
 	}
 
 	void setState(int8_t state, bool value) {
 #ifdef USEJUMPTOCLIENTHACK
 		JUMPTOCLIENT(0x4352C0);
 #else
-		ThisCall<0x4352C0, void, decltype(this)>::run(this);
+		ThisCall<0x4352C0, void, decltype(this), int8_t, bool>::run(this, state, value);
 #endif
 	}
 
