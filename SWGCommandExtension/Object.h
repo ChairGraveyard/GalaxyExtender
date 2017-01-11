@@ -29,13 +29,13 @@ public:
 	typedef Return(__thiscall* client_func_t)(This, ArgumentTypes...);
 
 	static inline Return run(This thisPointer, ArgumentTypes ... args) {
-		static client_func_t func = (client_func_t)FunctionAddress;
+		static client_func_t func = reinterpret_cast<client_func_t>(FunctionAddress);
 		return func(thisPointer, args...);
 	}
 
 	static inline Return runVirtual(This thisPointer, ArgumentTypes ... args) {
-		uint32_t* vtable = *(uint32_t**)thisPointer;
-		client_func_t func = (client_func_t)(vtable[(FunctionAddress / sizeof(uint32_t*))]);
+		auto vtable = *reinterpret_cast<uint32_t**>(thisPointer);
+		client_func_t func = reinterpret_cast<client_func_t>((vtable[(FunctionAddress / sizeof(uint32_t*))]));
 		return func(thisPointer, args...);
 	}
 };

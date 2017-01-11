@@ -13,9 +13,9 @@ PVOID Object::dynamicCast(PVOID inptr, PVOID SrcType, PVOID TargetType) {
 }
 
 bool Object::isCreatureObject() {
-	return asCreatureObject() != NULL;
+	return asCreatureObject() != nullptr;
 }
 
 CreatureObject* Object::asCreatureObject() {
-	return (CreatureObject*) dynamicCast(this, PTR_TO_OBJECT_TYPEINFO, PTR_TO_CREATUREOBJECT_TYPINFO);
+	return reinterpret_cast<CreatureObject*>(dynamicCast(this, PTR_TO_OBJECT_TYPEINFO, PTR_TO_CREATUREOBJECT_TYPINFO));
 }
