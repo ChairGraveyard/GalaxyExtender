@@ -101,7 +101,7 @@ soe::string soe::string::operator+(const soe::string & rhs) const {
 
 	memcpy(newstring.start, start, leftSize);
 	memcpy(newstring.start + leftSize, rhs.start, rightSize);
-	newstring.finish = start + (leftSize + rightSize);
+	newstring.finish = newstring.start + (leftSize + rightSize);
 	*(newstring.finish) = 0;
 
 	return newstring;
@@ -115,7 +115,7 @@ soe::string soe::string::operator+(const char* rhs) const {
 
 	memcpy(newstring.start, start, leftSize);
 	memcpy(newstring.start + leftSize, rhs, rightSize);
-	newstring.finish = start + (leftSize + rightSize );
+	newstring.finish = newstring.start + (leftSize + rightSize );
 	*(newstring.finish) = 0;
 
 	return newstring;
@@ -304,7 +304,7 @@ soe::unicode soe::unicode::operator+(const soe::unicode & rhs) const {
 
 	memcpy(newstring.start, start, leftSize * sizeof(wchar_t));
 	memcpy(newstring.start + leftSize, rhs.start, rightSize * sizeof(wchar_t));
-	newstring.finish = start + (leftSize + rightSize);
+	newstring.finish = newstring.start + (leftSize + rightSize);
 	*(newstring.finish) = 0;
 
 	return newstring;

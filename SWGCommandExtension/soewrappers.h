@@ -75,6 +75,7 @@ namespace soe {
 	public:
 		typedef storage_t* iterator;
 		typedef const storage_t* const_iterator;
+
 	protected:
 		storage_t* start;
 		storage_t* finish;

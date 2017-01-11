@@ -35,7 +35,7 @@ public:
 
 	static inline Return runVirtual(This thisPointer, ArgumentTypes ... args) {
 		auto vtable = *reinterpret_cast<uint32_t**>(thisPointer);
-		client_func_t func = reinterpret_cast<client_func_t>((vtable[(FunctionAddress / sizeof(uint32_t*))]));
+		client_func_t func = reinterpret_cast<client_func_t>(vtable[(FunctionAddress / sizeof(uint32_t*))]);
 		return func(thisPointer, args...);
 	}
 };
