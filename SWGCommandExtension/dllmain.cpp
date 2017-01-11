@@ -388,6 +388,11 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 					echo("could not find console in cui mediator");
 				}
 
+				soe::unicode parameter = "self";
+				uint64_t targetoid = 0;
+				clientCommandQueueEnqueue(soe::string::hashCode("target"), &targetoid, &parameter);
+
+				/*
 				CreatureObject* creature = gameGetPlayerCreature();
 				auto lookAtTarget = creature->getLookAtTarget();
 				Object* obj = lookAtTarget.getObject();
@@ -413,15 +418,16 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 						}
 					}
 				}
-
+				*/
 				handled = 1;
 			}
 			if (command == L"getcurrenthealth")
 			{ 
 				CreatureObject* creature = gameGetPlayerCreature();
 				PlayerObject* playerObject = gameGetPlayerObject();
-				soe::string strval = "testing";
+				soe::string strval = "testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing";
 				soe::unicode unicodeTest = "testingUnicode";
+				int mdasize = strval.size();
 
 				soe::vector<soe::string> testingShit = { "hui ne boisia", "balsda", "asdjasd", "asoidhaoisf" };
 				testingShit.push_back("mdaaa");
@@ -449,7 +455,7 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 				}
 
 				soe::unicode testingTheEmptyOne = *emptyUnicodeString;
-
+				str2val += "addition";
 
 				if (creature)
 				{
@@ -465,9 +471,9 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 					auto lookAtTarget = creature->getLookAtTarget();
 					uint64_t targetOID = lookAtTarget.getObjectID();
 					
-					char message[256];
-					sprintf_s(message, sizeof(message), "Your current health is: %d %s %s %s %d %d %lld %lld %d target: %lld %d", 
-						healthValue, strval.c_str(), str2val.c_str(), testingShit.at(12).c_str(), val1, val2, creoOID, playOID, checkVal, targetOID, atts.size());
+					char message[4092];
+					sprintf_s(message, sizeof(message), "Your current health is: %d %s %s %s %d %d %lld %lld %d target: %lld %d %d", 
+						healthValue, strval.c_str(), str2val.c_str(), testingShit.at(12).c_str(), val1, val2, creoOID, playOID, checkVal, targetOID, atts.size(), mdasize);
 
 					echo(message);
 

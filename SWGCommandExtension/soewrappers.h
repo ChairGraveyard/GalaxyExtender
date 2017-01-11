@@ -3,7 +3,7 @@
 #include <type_traits>
 #include <string>
 #include <initializer_list>
-
+#include <algorithm>
 
 #define STRALLOCATOR_ADDRESS 0x012EA770 /*for sizes <= 0x80, used in strings*/
 #define SOEALLOCATOR_ADDRESS 0x00AC15C0 /*for sizes > 0x80 and array boolean as false*/
@@ -114,15 +114,18 @@ namespace soe {
 
 		//gotta find the reallocs.. for now doing new alloc + copy instead on expand
 		void ensureCapacity(uint32_t newSize) {
-			uint32_t oldSize = size();
+			uint32_t oldSize = endOfStorage - start;
+			uint32_t oldFinishOffset = finish - start;
 
-			if (newSize <= (uint32_t)(endOfStorage - start))
+			if (newSize <= (uint32_t) oldSize)
 				return;
+
+			newSize = (std::max)(newSize, oldSize * 2);
 
 			storage_t* newStorage = Allocator::alloc(newSize);
 
 			if (std::is_trivially_copyable<storage_t>::value) {
-				memcpy(newStorage, start, size() * sizeof(storage_t));
+				memcpy(newStorage, start, oldSize * sizeof(storage_t));
 			}
 			else {
 				for (uint32_t i = 0; i < oldSize; ++i) {
@@ -134,7 +137,7 @@ namespace soe {
 
 			start = newStorage;
 			endOfStorage = newStorage + newSize;
-			finish = newStorage + oldSize;
+			finish = start + oldFinishOffset;
 		}
 
 	public:
@@ -188,6 +191,7 @@ namespace soe {
 			if (this == &c)
 				return *this;
 
+			destroyRange(0, size());
 			Allocator::free(start, endOfStorage - start);
 
 			uint32_t incomingSize = c.endOfStorage - c.start;
@@ -296,6 +300,9 @@ namespace soe {
 		}
 
 		stringbase_t(const stringbase_t& s) : container_base<storage_t, StringAllocator<storage_t> >(s) {
+			--finish;
+
+			*finish = 0;
 		}
 
 		explicit stringbase_t(const storage_t* cstring, int characterCount) : container_base<storage_t, StringAllocator<storage_t> >(characterCount + 1) {
@@ -304,11 +311,24 @@ namespace soe {
 			*finish = 0;
 		}
 
+		void push_back(const char& element) {
+			ensureCapacity(size() + 2);
+
+			container_base<storage_t, StringAllocator<storage_t>>::push_back(0);
+
+			*(finish - 1) = element;
+			*(finish) = 0;
+		}
+
 		stringbase_t& operator=(const stringbase_t& s) {
 			if (&s == this)
 				return *this;
 
 			container_base<storage_t, StringAllocator<storage_t> >::operator=(s);
+
+			--finish;
+
+			*finish = 0;
 
 			return *this;
 		}
@@ -322,6 +342,7 @@ namespace soe {
 
 			*finish = 0;
 		}
+
 	};
 	
 	class string : public stringbase_t<char> {
@@ -333,12 +354,20 @@ namespace soe {
 		string(const char* cstring);
 		string(const char* cstring, uint32_t length);
 
-		void push_back(const char& element);
+		//void push_back(const char& element);
 
 		string& operator=(const string& s);
 
+		string operator+ (const string& rhs) const;
+		string operator+ (const char* rhs) const;
+
+		string& operator+=(const string& rhs);
+		string& operator+=(const char* rhs);
+
 		bool operator==(const string& str) const;
 		bool operator==(const char* str) const;
+
+		//std::size_t hash() const;
 		
 		uint32_t hashCode() const;
 		static uint32_t hashCode(const char* str, uint32_t startCRC = 0xFFFFFFFF);
@@ -357,7 +386,7 @@ namespace soe {
 		unicode(const char* cstring);
 		unicode(const char* cstring, uint32_t length);
 
-		void push_back(const unsigned short& element);
+		//void push_back(const unsigned short& element);
 
 		string toAscii() const;
 

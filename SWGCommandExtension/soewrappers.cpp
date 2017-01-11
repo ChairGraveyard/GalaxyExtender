@@ -71,15 +71,6 @@ soe::string::string(const char* cstring) : soe::stringbase_t<char>(cstring, strl
 soe::string::string(const char* cstring, uint32_t length) : soe::stringbase_t<char>(cstring, length) {
 }
 
-void soe::string::push_back(const char& element) {
-	ensureCapacity(size() + 2);
-
-	soe::stringbase_t<char>::push_back(0);
-
-	*(finish - 1) = element;
-	*finish = 0;
-}
-
 soe::string& soe::string::operator=(const string& s) {
 	if (&s == this)
 		return *this;
@@ -89,7 +80,69 @@ soe::string& soe::string::operator=(const string& s) {
 	return *this;
 }
 
-bool soe::string::operator==(const string& str) const {
+soe::string soe::string::operator+(const soe::string & rhs) const {
+	uint32_t leftSize = size();
+	uint32_t rightSize = rhs.size();
+
+	soe::string newstring(leftSize + rightSize); //this allocates the extra finish character
+
+	memcpy(newstring.start, start, leftSize);
+	memcpy(newstring.start + leftSize, rhs.start, rightSize);
+	newstring.finish = start + (leftSize + rightSize);
+	*(newstring.finish) = 0;
+
+	return newstring;
+}
+
+soe::string soe::string::operator+(const char* rhs) const {
+	uint32_t leftSize = size();
+	uint32_t rightSize = strlen(rhs);
+
+	soe::string newstring(leftSize + rightSize); //this allocates the extra finish character
+
+	memcpy(newstring.start, start, leftSize);
+	memcpy(newstring.start + leftSize, rhs, rightSize);
+	newstring.finish = start + (leftSize + rightSize );
+	*(newstring.finish) = 0;
+
+	return newstring;
+}
+
+soe::string & soe::string::operator+=(const soe::string& rhs) {
+	uint32_t leftSize = size();
+	uint32_t rightSize = rhs.size();
+
+	ensureCapacity(leftSize + rightSize + 1);
+
+	if (start != rhs.start)
+		memcpy(start + leftSize, rhs.start, rightSize);
+	else
+		memmove(start + leftSize, rhs.start, rightSize);
+
+	finish = start + leftSize + rightSize;
+	*(finish) = 0;
+
+	return *this;
+}
+
+soe::string & soe::string::operator+=(const char* rhs) {
+	uint32_t leftSize = size();
+	uint32_t rightSize = strlen(rhs);
+
+	ensureCapacity(leftSize + rightSize + 1);
+
+	if (start != rhs)
+		memcpy(start + leftSize, rhs, rightSize);
+	else
+		memmove(start + leftSize, rhs, rightSize);
+
+	finish = start + leftSize + rightSize;
+	*(finish) = 0;
+
+	return *this;
+}
+
+bool soe::string::operator==(const soe::string& str) const {
 	if (this == &str)
 		return true;
 
@@ -103,6 +156,10 @@ bool soe::string::operator==(const char* str) const {
 bool soe::operator==(const char* s, const soe::string& s2) {
 	return s2.operator==(s);
 }
+
+/*std::size_t soe::string::hash() const {
+	return hashCode();
+}*/
 
 uint32_t soe::string::hashCode() const {
 	uint32_t CRC = 0xFFFFFFFF;
@@ -141,23 +198,16 @@ void soe::unicode::fromAscii(const char* cstring, uint32_t asciiSize) {
 	}
 
 	finish = start + asciiSize;
-	*finish = 0;
-}
-
-void soe::unicode::push_back(const unsigned short& element) {
-	ensureCapacity(size() + 2);
-
-	soe::stringbase_t<unsigned short>::push_back(0);
-
-	*(finish - 1) = element;
-	*finish = 0;
+	*(finish) = 0;
 }
 
 soe::string soe::unicode::toAscii() const {
-	soe::string ascii(size());
+	uint32_t thisSize = size();
 
-	for (const auto& v : *this) {
-		ascii.push_back((char)v);
+	soe::string ascii(thisSize);
+
+	for (uint32_t i = 0; i < thisSize; ++i) {
+		ascii.push_back((char)start[i]);
 	}
 
 	return ascii;
