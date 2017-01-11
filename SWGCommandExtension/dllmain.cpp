@@ -10,6 +10,10 @@
 
 #include "CreatureObject.h"
 #include "PlayerObject.h"
+#include "NetworkId.h"
+#include "ClientCommandQueue.h"
+#include "Game.h"
+#include "CuiMediatorFactory.h"
 
 using namespace std;
 
@@ -142,35 +146,10 @@ internalNonCollidableFloraSlider nonCollidableFloraSlider = (internalNonCollidab
 typedef float(__cdecl* internalRadialFloraSlider)(float);
 internalRadialFloraSlider radialFloraSlider = (internalRadialFloraSlider)RADIAL_FLORA_ADDRESS;
 
-#define GAME_GETPLAYER_ADDRESS 0x425140
-typedef void*(__cdecl* internalGameGetPlayer)();
-internalGameGetPlayer gameGetPlayer = (internalGameGetPlayer)GAME_GETPLAYER_ADDRESS; /* this returns the main player from the Game, usually its a CreatureObject*/
-
-#define GAME_GETPLAYERCREATURE_ADDRESS 0x425200
-typedef CreatureObject*(__cdecl* internalGameGetPlayerCreature)();
-internalGameGetPlayerCreature gameGetPlayerCreature = (internalGameGetPlayerCreature)GAME_GETPLAYERCREATURE_ADDRESS; /* this returns the main CreatureObject from the Game*/
-
-#define GAME_GETPLAYEROBJECT_ADDRESS 0x425180
-typedef PlayerObject*(__cdecl* internalGameGetPlayerObject)();
-internalGameGetPlayerObject gameGetPlayerObject = (internalGameGetPlayerObject)GAME_GETPLAYEROBJECT_ADDRESS; /* this returns the main PlayerObject (ghost from CreatureObject) from the Game*/
-
 #define GAMELANGUAGEMANAGER_GETLANGUAGESPEAKSKILLMODNAME_ADDRESS 0x011C6270
 typedef void(__cdecl* getLanguageSpeakSkillModName_t)(const int, soe::string&);
 getLanguageSpeakSkillModName_t getLanguageSpeakSkillModName = (getLanguageSpeakSkillModName_t)GAMELANGUAGEMANAGER_GETLANGUAGESPEAKSKILLMODNAME_ADDRESS;
 
-#define CLIENTCOMMANDQUEUE_ENQUEUECOMMAND_ADDRESS 0x46E5F0
-typedef void(__cdecl* enqueueCommandF_t)(uint32_t, uint64_t const *, soe::unicode*); //last void is their unicode string object as parameters
-enqueueCommandF_t clientCommandQueueEnqueue = (enqueueCommandF_t)CLIENTCOMMANDQUEUE_ENQUEUECOMMAND_ADDRESS;
-
-soe::unicode* emptyUnicodeString = (soe::unicode*) 0x01918970; /* useful for above */
-
-#define CUIFACTORY_GET_ADDRESS 0x00883FB0
-typedef Object*(__cdecl* cuiFactoryGet_t)(const char*, bool); 
-cuiFactoryGet_t cuiFactoryGet = (cuiFactoryGet_t)CUIFACTORY_GET_ADDRESS;
-
-#define CUIFACTORY_ACTIVATE_ADDRESS 0x008840D0
-typedef Object*(__cdecl* cuiFactoryActivate_t)(const char*, const char*, bool);
-cuiFactoryActivate_t cuiFactoryActivate = (cuiFactoryActivate_t)CUIFACTORY_ACTIVATE_ADDRESS;
 ///
 ///
 
@@ -377,24 +356,21 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 
 			if (command == L"assist2")
 			{
-				Object* console = cuiFactoryGet("DebugInfoPage", true);
+				Object* console = CuiMediatorFactory::get("DebugInfoPage");
 
-				if (console != NULL) {
+				if (console != nullptr) {
 					echo("activating console");
 
-					cuiFactoryActivate("DebugInfoPage", NULL, true);
+					CuiMediatorFactory::activate("DebugInfoPage");
 				}
 				else {
 					echo("could not find console in cui mediator");
 				}
 
-				soe::unicode parameter = "self";
-				uint64_t targetoid = 0;
-				clientCommandQueueEnqueue(soe::string::hashCode("target"), &targetoid, &parameter);
-
-				/*
-				CreatureObject* creature = gameGetPlayerCreature();
-				auto lookAtTarget = creature->getLookAtTarget();
+//				ClientCommandQueue::enqueueCommand(soe::string::hashCode("target"));
+			
+				CreatureObject* creature = Game::getPlayerCreature();
+				auto& lookAtTarget = creature->getLookAtTarget();
 				Object* obj = lookAtTarget.getObject();
 
 				if (obj) {
@@ -407,73 +383,77 @@ char hkCommandHandler(int a1, int a2, int a3, int a4)
 #ifndef NDEBUG
 						echo("creo not null");
 #endif
-						auto newLookAtTarget = creo->getLookAtTarget();
+						auto& newLookAtTarget = creo->getLookAtTarget();
 						Object* newTargetObject = newLookAtTarget.getObject();
 
 						if (newTargetObject) {
 #ifndef NDEBUG
 							echo("newTargetObject not null");
 #endif
-							clientCommandQueueEnqueue(soe::string::hashCode("target"), &newTargetObject->getObjectID(), emptyUnicodeString);
+							ClientCommandQueue::enqueueCommand(soe::string::hashCode("target"), newTargetObject->getObjectID());
 						}
 					}
 				}
-				*/
+	
 				handled = 1;
 			}
 			if (command == L"getcurrenthealth")
 			{ 
-				CreatureObject* creature = gameGetPlayerCreature();
-				PlayerObject* playerObject = gameGetPlayerObject();
+				CreatureObject* creature = Game::getPlayerCreature();
+				PlayerObject* playerObject = Game::getPlayerObject();
 				soe::string strval = "testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing";
 				soe::unicode unicodeTest = "testingUnicode";
 				int mdasize = strval.size();
+				int foundShitInVector = 0;
 
-				soe::vector<soe::string> testingShit = { "hui ne boisia", "balsda", "asdjasd", "asoidhaoisf" };
-				testingShit.push_back("mdaaa");
-				testingShit.push_back("balsda");
-				testingShit.push_back("echostringtest");
-				testingShit.push_back("echostringtest2");
-				testingShit.push_back("echostringtest3");
-				testingShit.push_back("echostringtest4");
-				testingShit.push_back("echostringtest5");
-				testingShit.push_back("echostringtest6");
-				testingShit.push_back("echostringtest8");
+				soe::vector<soe::string> testingVector = { "asdagdsg", "balsda", "asdjasd", "asoidhaoisf" };
+				testingVector.emplace_back("mdaaa");
+				testingVector.emplace_back("balsda");
+				testingVector.emplace_back("echostringtest");
+				testingVector.emplace_back("echostringtest2");
+				testingVector.emplace_back("echostringtest3");
+				testingVector.emplace_back("echostringtest4");
+				testingVector.emplace_back("echostringtest5");
+				testingVector.emplace_back("echostringtest6");
+				testingVector.emplace_back("echostringtest8");
+
+				auto findingVector = testingVector.find("echostringtest4");
+				foundShitInVector = findingVector != testingVector.end();
 				
-				//testingShit.at(0) = strval;
+				testingVector.at(0) = "setter";
 
 				getLanguageSpeakSkillModName(2, strval);
 
 				soe::string str2val = unicodeTest.toAscii();
 
-				testingShit.pop_back();
+				testingVector.pop_back();
 
-				testingShit.push_back("newafterpop");
+				testingVector.emplace_back("newafterpop");
 
 				if ("testingUnicode" == str2val) {
 					str2val = "yaycompareworks";
 				}
 
-				soe::unicode testingTheEmptyOne = *emptyUnicodeString;
-				str2val += "addition";
+				//soe::unicode testingTheEmptyOne = *emptyUnicodeString;
+				str2val = str2val + "addition";
 
 				if (creature)
 				{
-					const soe::vector<int> atts = creature->getAttributesArray();
-					int attssize = atts.size();
+					const soe::vector<int> atts = creature->getAttributesArray(); //this intentionally copies the incoming vector to test
 					int healthValue = creature->getAttribute(CreatureObject::Health);
 					bool val1 = playerObject->speaksLanguage(1);
 					bool val2 = playerObject->speaksLanguage(2);
-					uint64_t creoOID = creature->getObjectID();
+					auto& creoOID = creature->getObjectID();
 					uint64_t playOID = playerObject->getObjectID();
 					ClientObject* ghost = creature->getEquippedObject("ghost");
 					int checkVal = playOID == ghost->getObjectID();
 					auto lookAtTarget = creature->getLookAtTarget();
-					uint64_t targetOID = lookAtTarget.getObjectID();
+					auto& targetOID = lookAtTarget.getObjectID();
 					
-					char message[4092];
-					sprintf_s(message, sizeof(message), "Your current health is: %d %s %s %s %d %d %lld %lld %d target: %lld %d %d", 
-						healthValue, strval.c_str(), str2val.c_str(), testingShit.at(12).c_str(), val1, val2, creoOID, playOID, checkVal, targetOID, atts.size(), mdasize);
+					char message[1024];
+					sprintf_s(message, sizeof(message), "Your current health is: %d %s %s %s %d %d %lld %lld %d target: %lld %d %d %d", 
+						healthValue, strval.c_str(), str2val.c_str(), testingVector.at(0).c_str(), val1, val2, creoOID.get(), playOID, 
+						checkVal, targetOID.get(), atts.size(), mdasize, foundShitInVector);
 
 					echo(message);
 

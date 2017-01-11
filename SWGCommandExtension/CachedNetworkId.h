@@ -3,11 +3,12 @@
 #include <stdio.h>
 #include <string>
 
+#include "NetworkId.h"
 #include "Object.h"
 
 class CachedNetworkId {
 protected:
-	uint64_t oid = 0;
+	NetworkId oid;
 
 	/*different Bla<Object>*/
 	uint32_t* possibleVtable = nullptr;
@@ -25,11 +26,11 @@ public:
 #endif
 	}
 
-	const uint64_t& getObjectID() const {
+	const NetworkId& getObjectID() const {
 		return oid;
 	}
 
-	uint64_t& getObjectID() {
+	NetworkId& getObjectID() {
 		return oid;
 	}
 };

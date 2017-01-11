@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <cstdint>
+#include "NetworkId.h"
 
 #ifdef NDEBUG
 /*	
@@ -40,6 +41,17 @@ public:
 	}
 };
 
+template<uint32_t FunctionAddress, typename Return, typename ... ArgumentTypes>
+class Call {
+public:
+	static inline Return run(ArgumentTypes ... args) {
+		typedef Return(__cdecl* client_func_t)(ArgumentTypes...);
+
+		static client_func_t func = reinterpret_cast<client_func_t>(FunctionAddress);
+		return func(args...);
+	}
+};
+
 class Object {
 public:
 	template<typename T>
@@ -62,12 +74,12 @@ public:
 		return ThisCall<VirtualOffset, Return, Object*, ArgumentTypes...>::runVirtual(this, args...);
 	}
 
-	uint64_t& getObjectID() {
-		return getMemoryReference<uint64_t>(0x20);
+	NetworkId& getObjectID() {
+		return getMemoryReference<NetworkId>(0x20);
 	}
 
-	const uint64_t& getObjectID() const {
-		return getMemoryReference<uint64_t>(0x20);
+	const NetworkId& getObjectID() const {
+		return getMemoryReference<const NetworkId>(0x20);
 	}
 
 	bool isCreatureObject();

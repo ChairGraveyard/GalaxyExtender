@@ -132,11 +132,11 @@ namespace soe {
 		container_base& operator=(const container_base& c);
 		container_base& operator=(container_base&& c) noexcept;
 
-		storage_t* find(const storage_t& obj, std::size_t pos = 0) noexcept {
+		iterator find(const storage_t& obj, std::size_t pos = 0) noexcept {
 			return std::find(std::begin(*this), std::end(*this), obj);
 		}
 
-		const storage_t* find(const storage_t& obj, std::size_t pos = 0) const noexcept {
+		const_iterator find(const storage_t& obj, std::size_t pos = 0) const noexcept {
 			return std::find(std::begin(*this), std::end(*this), obj);
 		}
 
@@ -501,6 +501,8 @@ namespace soe {
 
 		unicode& operator=(const unicode& s);
 		unicode operator+ (const unicode& rhs) const;
+
+		static const unicode& empty_string();
 	};
 
 	bool operator==(const char* s, const soe::unicode& s2);
