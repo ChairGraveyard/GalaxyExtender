@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <cassert>
 #include <wchar.h>
+#include <vector>
+#include <utility>
 
 #define STRALLOCATOR_ADDRESS 0x012EA770 /*for sizes <= 0x80, used in strings*/
 #define SOEALLOCATOR_ADDRESS 0x00AC15C0 /*for sizes > 0x80 and array boolean as false*/
@@ -16,6 +18,9 @@
 #define STRDEALLOCATOR2_ADDRESS 0x012EA920 /*for sizes < 0x80 looks like system deallocator, used in strings*/
 
 #define EMPTY_CONTAINER_INITIAL_OBJECTS 8
+
+//#define SOEHOOK(x, y) soe::Hook<x, decltype(y)>::attach(y)
+#define DEFINE_HOOOK(x, y, z) typedef decltype(&y) z ## _t; z ## _t z = (decltype(&y)) x;
 
 namespace soe {
 	typedef void*(__cdecl* strallocator_t)(uint32_t);
@@ -509,4 +514,28 @@ namespace soe {
 
 	template <typename T> using vector = container_base<T>;
 
+	/*class HooksStorage {
+	public:
+		static int count;
+		static std::pair<uint32_t, void*> hooks[256];
+
+		static void addHook(uint32_t val, void* addr) {
+			hooks[count] = std::make_pair(val, addr);
+			count++;
+		}
+	};
+
+	template<uint32_t FunctionAddress, typename FunctionType>
+	class Hook {
+		static void* addressStorage;
+	public:
+		static FunctionType* attach(void* newAddress) {
+			HooksStorage::addHook(FunctionAddress, &addressStorage);
+
+			return (FunctionType*)&addressStorage;
+		}
+	};
+
+	template<uint32_t FunctionAddress, typename FunctionType>
+	void* Hook<FunctionAddress, FunctionType>::addressStorage;*/
 }
