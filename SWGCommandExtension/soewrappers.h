@@ -138,11 +138,11 @@ namespace soe {
 		container_base& operator=(container_base&& c) noexcept;
 
 		iterator find(const storage_t& obj, std::size_t pos = 0) noexcept {
-			return std::find(std::begin(*this), std::end(*this), obj);
+			return std::find(std::begin(*this) + pos, std::end(*this), obj);
 		}
 
 		const_iterator find(const storage_t& obj, std::size_t pos = 0) const noexcept {
-			return std::find(std::begin(*this), std::end(*this), obj);
+			return std::find(std::begin(*this) + pos, std::end(*this), obj);
 		}
 
 		const_iterator begin() const noexcept {
@@ -382,6 +382,7 @@ namespace soe {
 	class stringbase_t : public container_base<storage_t, StringAllocator<storage_t> > {
 	public:
 		typedef container_base<storage_t, StringAllocator<storage_t> > base_t;
+		const static std::size_t npos = -1;
 
 		stringbase_t() : base_t() {
 			*base_t::end() = 0;
@@ -407,6 +408,9 @@ namespace soe {
 		}
 
 		void push_back(const char& element);
+
+		template<class ReturnType>
+		ReturnType substr(std::size_t pos = 0, std::size_t len = npos) const;
 
 		stringbase_t& operator=(const stringbase_t& s);
 
@@ -437,6 +441,24 @@ namespace soe {
 	}
 
 	template <typename storage_t>
+	template <class ReturnType>
+	ReturnType stringbase_t<storage_t>::substr(std::size_t beginIndex, std::size_t len) const {
+		auto count = base_t::size();
+
+		if (beginIndex > count)
+			throw std::exception("out of bounds");
+		else if (len != npos && (len - beginIndex) > count) {
+			len = count - beginIndex;
+		} else if (beginIndex == count)
+			return ReturnType();
+
+		if (len == npos)
+			return ReturnType(base_t::begin() + beginIndex);
+		else
+			return ReturnType(base_t::begin() + beginIndex, len);
+	}
+
+	template <typename storage_t>
 	stringbase_t<storage_t>& stringbase_t<storage_t>::operator=(const stringbase_t& s) {
 		if (&s == this)
 			return *this;
@@ -461,6 +483,10 @@ namespace soe {
 
 		std::size_t find(const string& str, std::size_t pos = 0) const noexcept;
 
+		string substr(std::size_t pos = 0, std::size_t len = npos) const {
+			return stringbase_t<char>::substr<string>(pos, len);
+		}
+
 		string& operator=(const string& s);
 
 		string operator+ (const string& rhs) const;
@@ -471,6 +497,16 @@ namespace soe {
 
 		bool operator==(const string& str) const;
 		bool operator==(const char* str) const;
+
+		std::size_t find(char str, std::size_t pos = 0) const noexcept {
+			auto it = stringbase_t::find(str, pos);
+
+			if (it != stringbase_t::end()) {
+				return it - stringbase_t::begin();
+			} else {
+				return npos;
+			}
+		}
 
 		//std::size_t hash() const;
 		
@@ -497,12 +533,30 @@ namespace soe {
 		unicode(const char* cstring);
 		unicode(const char* cstring, uint32_t length);
 
+		unicode(const wchar_t* cstring);
+		unicode(const wchar_t* cstring, uint32_t length);
+
+		std::size_t find(wchar_t str, std::size_t pos = 0) const noexcept {
+			auto it = stringbase_t::find(str, pos);
+
+			if (it != stringbase_t::end()) {
+				return it - stringbase_t::begin();
+			} else {
+				return npos;
+			}
+		}
+
 		string toAscii() const;
+
+		unicode substr(std::size_t pos = 0, std::size_t len = npos) const {
+			return stringbase_t<wchar_t>::substr<unicode>(pos, len);
+		}
 
 		std::size_t find(const unicode& str, std::size_t pos = 0) const noexcept;
 
 		bool operator==(const unicode& str) const;
 		bool operator==(const char* str) const;
+		bool operator==(const wchar_t* str) const;
 
 		unicode& operator=(const unicode& s);
 		unicode operator+ (const unicode& rhs) const;
@@ -513,29 +567,4 @@ namespace soe {
 	bool operator==(const char* s, const soe::unicode& s2);
 
 	template <typename T> using vector = container_base<T>;
-
-	/*class HooksStorage {
-	public:
-		static int count;
-		static std::pair<uint32_t, void*> hooks[256];
-
-		static void addHook(uint32_t val, void* addr) {
-			hooks[count] = std::make_pair(val, addr);
-			count++;
-		}
-	};
-
-	template<uint32_t FunctionAddress, typename FunctionType>
-	class Hook {
-		static void* addressStorage;
-	public:
-		static FunctionType* attach(void* newAddress) {
-			HooksStorage::addHook(FunctionAddress, &addressStorage);
-
-			return (FunctionType*)&addressStorage;
-		}
-	};
-
-	template<uint32_t FunctionAddress, typename FunctionType>
-	void* Hook<FunctionAddress, FunctionType>::addressStorage;*/
 }

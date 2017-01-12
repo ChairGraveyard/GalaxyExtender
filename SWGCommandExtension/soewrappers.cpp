@@ -220,6 +220,12 @@ soe::unicode::unicode(const uint32_t initialCapacity) : soe::stringbase_t<wchar_
 soe::unicode::unicode(const soe::unicode& s) : soe::stringbase_t<wchar_t>(s) {
 }
 
+soe::unicode::unicode(const wchar_t* cstring) : soe::stringbase_t<wchar_t>(cstring, wcslen(cstring)) {
+}
+
+soe::unicode::unicode(const wchar_t* cstring, uint32_t length) : soe::stringbase_t<wchar_t>(cstring, length) {
+}
+
 soe::unicode::unicode(const char* cstring) : soe::stringbase_t<wchar_t>(strlen(cstring)) {
 	fromAscii(cstring);
 }
@@ -284,6 +290,10 @@ bool soe::unicode::operator==(const soe::unicode& str) const {
 	}
 
 	return thisLength == i;
+}
+
+bool soe::unicode::operator==(const wchar_t* str) const {
+	return wcscmp(begin(), str) == 0;
 }
 
 bool soe::unicode::operator==(const char* str) const {

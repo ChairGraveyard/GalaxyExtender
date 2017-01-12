@@ -11,7 +11,9 @@
 #include "Game.h"
 #include "ClientCommandQueue.h"
 
-float globalDetailOverrideValue = 12.0f;
+
+extern float terrainDistanceOverrideValue;
+extern float globalDetailOverrideValue;
 
 /// Pointers/Offsets
 ///
@@ -76,55 +78,45 @@ void __fastcall hkLoginScreenOnButtonPressed(Object* thisPointer, void* unused, 
 
 /// General Utilities
 ///
-void split(const std::string& s, char delim, std::vector<std::string>& v) {
+template<typename String, typename Delimiter, typename Vector>
+void split(const String& s, Delimiter delim, Vector& v) {
 	auto i = 0;
 	auto pos = s.find(delim);
-	while (pos != std::string::npos) {
+	while (pos != String::npos) {
 		v.push_back(s.substr(i, pos - i));
 		i = ++pos;
 		pos = s.find(delim, pos);
 
-		if (pos == std::string::npos)
+		if (pos == String::npos)
 			v.push_back(s.substr(i, s.length()));
 	}
 }
 
-void split(const std::wstring& s, wchar_t delim, std::vector<std::wstring>& v) {
-	auto i = 0;
-	auto pos = s.find(delim);
-	while (pos != std::wstring::npos) {
-		v.push_back(s.substr(i, pos - i));
-		i = ++pos;
-		pos = s.find(delim, pos);
-
-		if (pos == std::wstring::npos)
-			v.push_back(s.substr(i, s.length()));
-	}
+float stof(const soe::unicode& str) {
+	return std::stof(str.c_str());
 }
 
 DEFINE_HOOOK(COMMAND_HANDLER_ADDRESS, CuiChatParser::parse, oldChatParse);
 
 bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& resultUnicode, uint32_t chatRoomID, bool useChatRoom) {
 	// Create local string for convenience.
-	using namespace std;
-	wstring commandString(incomingCommand.c_str());
-	vector<wstring> args;
+	soe::vector<soe::unicode> args;
 
 	bool handled = false;
 
 	// Make sure this is a slash command before interpreting.
-	wstring::size_type foundSlash = commandString.find(L"/");
-	if (foundSlash != wstring::npos)
+	auto foundSlash = incomingCommand.find(L"/");
+	if (foundSlash != soe::unicode::npos)
 	{
 		// Strip the slash.
-		wstring afterSlash = commandString.substr(foundSlash + 1);
+		auto afterSlash = incomingCommand.substr(foundSlash + 1);
 
 		// Break into arguments.
 		split(afterSlash, L' ', args);
 
 		if (args.size() >= 2)
 		{
-			wstring &command = args[0];
+			auto &command = args[0];
 
 			// Handle global detail command.
 			if (command == L"globaldetail")
@@ -140,8 +132,6 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 			} else if (command == L"highdetailterrain" || command == L"hdterrain")
 			{
 				float newVal = stof(args[1]);
-
-				extern float terrainDistanceOverrideValue;
 
 				terrainDistanceOverrideValue = newVal;
 
@@ -185,7 +175,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 
 				echo("Note, you still must open Options -> Terrain and slide the Global Detail Level and High Detail Terrain Distance sliders for those settings to take effect.");
 
-				wstring& setting = args[1];
+				auto& setting = args[1];
 				if (setting == L"help")
 				{
 					echo("This command sets the overrides for all settings at once.");
@@ -201,7 +191,6 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					(*viewDistance) = 1024;
 
 					globalDetailOverrideValue = 6;
-					extern float terrainDistanceOverrideValue;
 
 					terrainDistanceOverrideValue = 10;
 					radialFloraSlider(64);
@@ -213,7 +202,6 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					(*viewDistance) = 1536;
 
 					globalDetailOverrideValue = 8;
-					extern float terrainDistanceOverrideValue;
 
 					terrainDistanceOverrideValue = 12;
 					radialFloraSlider(80);
@@ -225,8 +213,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					(*viewDistance) = 2048;
 
 					globalDetailOverrideValue = 9;
-					extern float terrainDistanceOverrideValue;
-
+					
 					terrainDistanceOverrideValue = 15;
 					radialFloraSlider(100);
 					nonCollidableFloraSlider(55);
@@ -237,8 +224,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					(*viewDistance) = 4096;
 
 					globalDetailOverrideValue = 12;
-					extern float terrainDistanceOverrideValue;
-
+					
 					terrainDistanceOverrideValue = 30;
 					radialFloraSlider(128);
 					nonCollidableFloraSlider(64);
@@ -249,8 +235,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					(*viewDistance) = 4096;
 
 					globalDetailOverrideValue = 16;
-					extern float terrainDistanceOverrideValue;
-
+					
 					terrainDistanceOverrideValue = 50;
 					radialFloraSlider(256);
 					nonCollidableFloraSlider(128);
@@ -263,7 +248,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 			// Check for other commands
 		} else if (afterSlash.size() > 0)
 		{
-			wstring &command = afterSlash;
+			auto &command = afterSlash;
 
 			if (command == L"assist2")
 			{
@@ -377,7 +362,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 			} else if (command == L"getradialflora")
 			{
 				double radialDist = getRadialFloraDistance();
-				string radialDistString = to_string(radialDist);
+				auto radialDistString = std::to_string(radialDist);
 
 				echo("Radial Flora Distance: ");
 				echo(radialDistString.c_str());
@@ -386,7 +371,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 			} else if (command == L"getnoncollidableflora" || command == L"getncflora")
 			{
 				double ncDist = getNonCollidableFloraDistance();
-				string ncDistString = to_string(ncDist);
+				auto ncDistString = std::to_string(ncDist);
 
 				echo("Non-Collidable Flora Distance: ");
 				echo(ncDistString.c_str());
@@ -396,7 +381,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 			{
 				DWORD* viewDistBase = (DWORD*)VIEW_DISTANCE_BASE;
 				float* viewDistance = (float*)((*viewDistBase) + VIEW_DISTANCE_OFFSET);
-				string viewDistString = to_string((*viewDistance));
+				auto viewDistString = std::to_string((*viewDistance));
 
 				echo("View/Rendering Distance: ");
 				echo(viewDistString.c_str());

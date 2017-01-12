@@ -3,30 +3,16 @@
 
 #include <windows.h>
 #include <detours.h>
-#include <iostream>
-#include <iterator>
-#include <string>
-#include <vector>
 
 #include "CreatureObject.h"
-#include "PlayerObject.h"
-#include "NetworkId.h"
-#include "ClientCommandQueue.h"
-#include "Game.h"
 #include "CuiMediatorFactory.h"
 #include "CuiChatParser.h"
 
 using namespace std;
 
-
-///
-///
-
-
 /// Memory Utilties
 ///
-void writeJmp(BYTE* address, DWORD jumpTo, DWORD length)
-{
+void writeJmp(BYTE* address, DWORD jumpTo, DWORD length) {
 	DWORD oldProtect, newProtect, relativeAddress;
 
 	VirtualProtect(address, length, PAGE_EXECUTE_READWRITE, &oldProtect);
@@ -55,15 +41,10 @@ void writeBytes(BYTE* address, const BYTE* values, int size) {
 
 DWORD globalDetailJmpAddress = 0x85E1C1;
 DWORD globalDetailReturnJmp = 0x85E1C6;
-///
-///
+float globalDetailOverrideValue = 12.0f;
 
 /// Mid-Function Hooks
 ///
-
-extern float globalDetailOverrideValue;
-extern float terrainDistanceOverrideValue;
-
 __declspec(naked) void globalDetailSliderHook()
 {
 	__asm
@@ -92,12 +73,6 @@ __declspec(naked) void terrainDistanceSliderHook()
 ///
 ///
 
-class CreatureObject;
-
-///
-///
-
-
 #define ATTACH_HOOK(X, Y) extern decltype(&X) Y; DetourAttach((PVOID*) &Y, X);
 
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
@@ -114,9 +89,6 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 
 		ATTACH_HOOK(CuiChatParser::parse, oldChatParse);
 
-		//DetourAttach((PVOID*)(&originalCommandHandler), (PVOID)hkCommandHandler);
-		//DetourAttach((PVOID*)(&originalLoginScreenOnButtonPressedObject), (PVOID)hkLoginScreenOnButtonPressed);
-
 		LONG errorCode = DetourTransactionCommit();
 
 		if (errorCode == NO_ERROR) {
@@ -131,8 +103,7 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 			// Show our loaded message (only displays if chat is already present).
 			CuiChatParser::echo("[LOADED] Settings Override Extensions by N00854180T");
 			CuiChatParser::echo("Use /exthelp for details on extension command usage.");
-		}
-		else {
+		} else {
 			CuiChatParser::echo("[LOAD] FAILED");
 		}
 
