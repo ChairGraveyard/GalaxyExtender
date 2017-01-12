@@ -7,6 +7,7 @@
 #include "CreatureObject.h"
 #include "CuiMediatorFactory.h"
 #include "CuiChatParser.h"
+#include "Game.h"
 
 using namespace std;
 
@@ -73,7 +74,7 @@ __declspec(naked) void terrainDistanceSliderHook()
 ///
 ///
 
-#define ATTACH_HOOK(X, Y) extern decltype(&X) Y; DetourAttach((PVOID*) &Y, X);
+#define ATTACH_HOOK(X, Y) extern GENERATE_HOOK_TYPE(X) Y; DetourAttach((PVOID*) &Y, X);
 
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 {
@@ -101,10 +102,10 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 			writeJmp((BYTE*)globalDetailJmpAddress, (DWORD)globalDetailSliderHook, 5);
 						
 			// Show our loaded message (only displays if chat is already present).
-			CuiChatParser::echo("[LOADED] Settings Override Extensions by N00854180T");
-			CuiChatParser::echo("Use /exthelp for details on extension command usage.");
+			Game::debugPrintUi("[LOADED] Settings Override Extensions by N00854180T");
+			Game::debugPrintUi("Use /exthelp for details on extension command usage.");
 		} else {
-			CuiChatParser::echo("[LOAD] FAILED");
+			Game::debugPrintUi("[LOAD] FAILED");
 		}
 
 		break;

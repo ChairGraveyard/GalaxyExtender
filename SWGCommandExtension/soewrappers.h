@@ -19,8 +19,10 @@
 
 #define EMPTY_CONTAINER_INITIAL_OBJECTS 8
 
-//#define SOEHOOK(x, y) soe::Hook<x, decltype(y)>::attach(y)
-#define DEFINE_HOOOK(x, y, z) typedef decltype(&y) z ## _t; z ## _t z = (decltype(&y)) x;
+#define GENERATE_HOOK_TYPE(x) decltype(&x)
+#define DEFINE_HOOOK(x, y, z) typedef GENERATE_HOOK_TYPE(y) z ## _t; z ## _t z = (decltype(&y)) x;
+#define DEFINE_CLIENT_STATIC(x, y) static x ## & y;
+#define SET_CLIENT_STATIC(x, y) decltype(x) x = *reinterpret_cast<std::add_pointer<std::remove_reference<decltype(x)>::type>::type>(y);
 
 namespace soe {
 	typedef void*(__cdecl* strallocator_t)(uint32_t);
