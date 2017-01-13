@@ -46,6 +46,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 
 	bool handled = false;
 	auto groundScene = Game::getGroundScene();
+	auto camera = groundScene ? groundScene->getFreeChaseCamera() : nullptr;
 
 	// Make sure this is a slash command before interpreting.
 	auto foundSlash = incomingCommand.find(L"/");
@@ -111,8 +112,6 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				handled = true;
 			} else if (command == L"viewdistance" || command == L"vd")
 			{
-				auto camera = groundScene->getFreeChaseCamera();
-
 				if (camera) {
 					float newVal = stof(args[1]);
 
@@ -125,7 +124,6 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 			} else if (command == L"overrideall" || command == L"setall")
 			{
 
-				auto camera = groundScene->getFreeChaseCamera();
 
 				auto& setting = args[1];
 				if (setting == L"help")
@@ -140,7 +138,8 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				{
 					Game::debugPrintUi("Default - View Distance: 1024, Global Detail: 6, High Detail Terrain: 10, Radial Flora: 64, Non-Collidable Flora: 32");
 
-					camera->setViewDistance(1024);
+					if (camera)
+						camera->setViewDistance(1024);
 
 					TerrainObject::setLevelOfDetailThreshold(6);
 
@@ -151,7 +150,8 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				{
 					Game::debugPrintUi("Low - View Distance: 1536, Global Detail: 8, High Detail Terrain: 12, Radial Flora: 80, Non-Collidable Flora: 50");
 
-					camera->setViewDistance(1536);
+					if (camera)
+						camera->setViewDistance(1536);
 
 					TerrainObject::setLevelOfDetailThreshold(8);
 
@@ -162,7 +162,8 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				{
 					Game::debugPrintUi("Medium - View Distance: 2048, Global Detail: 9, High Detail Terrain: 15, Radial Flora: 100, Non-Collidable Flora: 55");
 
-					camera->setViewDistance(2048);
+					if (camera)
+						camera->setViewDistance(2048);
 
 					TerrainObject::setLevelOfDetailThreshold(9);
 					
@@ -173,7 +174,8 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				{
 					Game::debugPrintUi("High - View Distance: 4096, Global Detail: 12, High Detail Terrain: 30, Radial Flora: 128, Non-Collidable Flora: 64");
 
-					camera->setViewDistance(4096);
+					if (camera)
+						camera->setViewDistance(4096);
 
 					TerrainObject::setLevelOfDetailThreshold(12);
 					
@@ -184,7 +186,8 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				{
 					Game::debugPrintUi("Ultra - View Distance: 4096, Global Detail: 16, High Detail Terrain: 50, Radial Flora: 256, Non-Collidable Flora: 128");
 
-					camera->setViewDistance(4096);
+					if (camera)
+						camera->setViewDistance(4096);
 
 					TerrainObject::setLevelOfDetailThreshold(16);
 					
@@ -340,11 +343,12 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				handled = true;
 			} else if (command == L"getviewdistance" || command == L"getvd")
 			{
-				auto camera = groundScene->getFreeChaseCamera();
-				auto viewDistString = std::to_string(camera->getViewDistance());
+				if (camera) {
+					auto viewDistString = std::to_string(camera->getViewDistance());
 
-				Game::debugPrintUi("View/Rendering Distance: ");
-				Game::debugPrintUi(viewDistString.c_str());
+					Game::debugPrintUi("View/Rendering Distance: ");
+					Game::debugPrintUi(viewDistString.c_str());
+				}
 
 				handled = true;
 			} else if (command == L"exthelp")
