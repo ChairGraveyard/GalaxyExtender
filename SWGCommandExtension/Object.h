@@ -52,6 +52,25 @@ public:
 	}
 };
 
+template<typename ThisType, typename C, typename ReturnType, typename ... Args>
+class HookThis {
+public:
+	static C newMethod;
+
+	static ReturnType __fastcall fastHook(ThisType thisPointer, void*, Args... args) {
+		ThisType object = (ThisType)thisPointer;
+		(object->*(HookThis<ThisType, C, ReturnType, Args...>::newMethod))(args...);
+	}
+
+	typedef decltype(&fastHook) original_t;
+
+	static original_t original;
+
+	static ReturnType runOriginal(ThisType thisPointer, Args... args) {
+		original(thisPointer, 0, args...);
+	}
+};
+
 class Object {
 public:
 	template<typename T>
@@ -94,5 +113,5 @@ public:
 		);
 
 	static dyn_cast_t soe_rt_dynamic_cast_func;
-	static PVOID dynamicCast(PVOID inptr, PVOID SrcType, PVOID TargetType);
+	static PVOID dynamicCast(PVOID inptr, const PVOID SrcType, const PVOID TargetType);
 };

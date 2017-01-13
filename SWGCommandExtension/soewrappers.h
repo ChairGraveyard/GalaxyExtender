@@ -24,6 +24,21 @@
 #define DEFINE_CLIENT_STATIC(x, y) static x ## & y;
 #define SET_CLIENT_STATIC(x, y) decltype(x) x = *reinterpret_cast<std::add_pointer<std::remove_reference<decltype(x)>::type>::type>(y);
 
+#define SET_HOOK_THISCALL(CLASS, METHOD, RETURNTYPE, HOOKOBJECT, ...) \
+	typedef GENERATE_HOOK_THIS_TYPE(CLASS, METHOD, RETURNTYPE, ##__VA_ARGS__) HOOKOBJECT;
+
+#define GENERATE_HOOK_THIS_TYPE(CLASS, METHOD, RETURNTYPE, ...) HookThis<CLASS ## *, decltype(& ## CLASS ## :: ## METHOD), RETURNTYPE, ##__VA_ARGS__ ## >
+
+#define DEFINE_HOOK_THISCALL(ADDRESS, CLASS, RETURNTYPE, METHOD, ...) \
+	template<typename ThisType, typename C, typename ReturnType, typename ... Args> \
+	C HookThis<ThisType, C, ReturnType, Args...>::newMethod = & ## CLASS ## :: ## METHOD; \
+	\
+	template<typename ThisType, typename C, typename ReturnType, typename ... Args> \
+	typename HookThis<ThisType, C, ReturnType, Args...>::original_t HookThis<ThisType, C, ReturnType, Args...>::original = (typename HookThis<ThisType, C, ReturnType, Args...>::original_t)(ADDRESS); \
+	\
+	typedef GENERATE_HOOK_THIS_TYPE(CLASS, METHOD, RETURNTYPE, ##__VA_ARGS__) CLASS ## _ ## METHOD ## _hook_t;
+
+
 namespace soe {
 	typedef void*(__cdecl* strallocator_t)(uint32_t);
 	typedef void*(__cdecl* strallocator2_t)(uint32_t);
@@ -31,12 +46,30 @@ namespace soe {
 	typedef void(__cdecl* strdeallocator2_t)(void*, uint32_t);
 
 	template<typename storage_t>
-	class StringAllocator {
+	class allocator {
 	public:
-		constexpr StringAllocator() {
+		constexpr allocator() {
 		}
 
-		static storage_t* alloc(int objectCount) {
+		static storage_t* allocate(std::size_t objectCount) {
+			static strallocator_t strallocator1 = reinterpret_cast<strallocator_t>(SOEALLOCATOR_ADDRESS);
+
+			return reinterpret_cast<storage_t*>(strallocator1(objectCount * sizeof(storage_t)));
+		}
+
+		static void deallocate(storage_t* address, std::size_t objectCount) {
+			static strdeallocator1_t deall1 = reinterpret_cast<strdeallocator1_t>(STRDEALLOCATOR1_ADDRESS);
+			deall1(address);
+		}
+	};
+
+	template<typename storage_t>
+	class string_allocator : public allocator<storage_t> {
+	public:
+		constexpr string_allocator() {
+		}
+
+		static storage_t* allocate(std::size_t objectCount) {
 			if ((objectCount * sizeof(storage_t)) > 0x80) {
 				static strallocator_t strallocator1 = reinterpret_cast<strallocator_t>(SOEALLOCATOR_ADDRESS);
 
@@ -48,7 +81,7 @@ namespace soe {
 			}
 		}
 
-		static void free(storage_t* address, int objectCount) {
+		static void deallocate(storage_t* address, std::size_t objectCount) {
 			if ((objectCount * sizeof(storage_t)) > 0x80) {
 				static strdeallocator1_t deall1 = reinterpret_cast<strdeallocator1_t>(STRDEALLOCATOR1_ADDRESS);
 				deall1(address);
@@ -59,25 +92,7 @@ namespace soe {
 		}
 	};
 
-	template<typename storage_t>
-	class DefaultSOEAllocator {
-	public:
-		constexpr DefaultSOEAllocator() {
-		}
-
-		static storage_t* alloc(int objectCount) {
-			static strallocator_t strallocator1 = reinterpret_cast<strallocator_t>(SOEALLOCATOR_ADDRESS);
-
-			return reinterpret_cast<storage_t*>(strallocator1(objectCount * sizeof(storage_t)));
-		}
-
-		static void free(storage_t* address, int objectCount) {
-			static strdeallocator1_t deall1 = reinterpret_cast<strdeallocator1_t>(STRDEALLOCATOR1_ADDRESS);
-			deall1(address);
-		}
-	};
-
-	template<typename storage_t, class Allocator = DefaultSOEAllocator<storage_t>>
+	template<typename storage_t, class Allocator = allocator<storage_t>>
 	class container_base {
 	public:
 		typedef storage_t* iterator;
@@ -116,17 +131,17 @@ namespace soe {
 			}
 		}
 
-		//gotta find the reallocs.. for now doing new alloc + copy instead on expand
+		//gotta find the reallocs.. for now doing new allocate + copy instead on expand
 		void ensureCapacity(uint32_t newSize);
 
 	public:
 		container_base() {
-			start = finish = Allocator::alloc(EMPTY_CONTAINER_INITIAL_OBJECTS);
+			start = finish = Allocator::allocate(EMPTY_CONTAINER_INITIAL_OBJECTS);
 			endOfStorage = start + EMPTY_CONTAINER_INITIAL_OBJECTS;
 		}
 
 		explicit container_base(const uint32_t initialAllocObjectCount) {
-			start = finish = Allocator::alloc(initialAllocObjectCount);
+			start = finish = Allocator::allocate(initialAllocObjectCount);
 			endOfStorage = start + initialAllocObjectCount;
 		}
 
@@ -269,7 +284,7 @@ namespace soe {
 
 		newSize = (std::max)(newSize, oldSize * 2);
 
-		storage_t* newStorage = Allocator::alloc(newSize);
+		storage_t* newStorage = Allocator::allocate(newSize);
 
 		if (std::is_trivially_copyable<storage_t>::value) {
 			memcpy(newStorage, start, oldSize * sizeof(storage_t));
@@ -285,7 +300,7 @@ namespace soe {
 
 		destroyRange(0, oldSize);
 
-		Allocator::free(start, endOfStorage - start);
+		Allocator::deallocate(start, endOfStorage - start);
 
 		start = newStorage;
 		endOfStorage = newStorage + newSize;
@@ -296,7 +311,7 @@ namespace soe {
 	container_base<storage_t, Allocator>::container_base(std::initializer_list<storage_t> list) {
 		const uint32_t incomingSize = list.size();
 
-		start = Allocator::alloc(incomingSize);
+		start = Allocator::allocate(incomingSize);
 		finish = start + incomingSize;
 
 		endOfStorage = start + incomingSize;
@@ -317,7 +332,7 @@ namespace soe {
 	container_base<storage_t, Allocator>::container_base(const container_base& c) {
 		uint32_t incomingSize = c.endOfStorage - c.start;
 
-		start = finish = Allocator::alloc(incomingSize);
+		start = finish = Allocator::allocate(incomingSize);
 		endOfStorage = start + incomingSize;
 
 		copyFrom(c.start, incomingSize);
@@ -339,7 +354,7 @@ namespace soe {
 		if (start != nullptr) {
 			destroyRange(0, size());
 
-			Allocator::free(start, endOfStorage - start);
+			Allocator::deallocate(start, endOfStorage - start);
 		}
 	}
 
@@ -349,11 +364,11 @@ namespace soe {
 			return *this;
 
 		destroyRange(0, size());
-		Allocator::free(start, endOfStorage - start);
+		Allocator::deallocate(start, endOfStorage - start);
 
 		uint32_t incomingSize = c.endOfStorage - c.start;
 
-		start = finish = Allocator::alloc(incomingSize);
+		start = finish = Allocator::allocate(incomingSize);
 		endOfStorage = start + incomingSize;
 
 		copyFrom(c.start, incomingSize);
@@ -367,7 +382,7 @@ namespace soe {
 			return *this;
 
 		destroyRange(0, size());
-		Allocator::free(start, endOfStorage - start);
+		Allocator::deallocate(start, endOfStorage - start);
 
 		start = c.start;
 		finish = c.finish;
@@ -381,9 +396,9 @@ namespace soe {
 	}
 
 	template <typename storage_t>
-	class stringbase_t : public container_base<storage_t, StringAllocator<storage_t> > {
+	class stringbase_t : public container_base<storage_t, string_allocator<storage_t> > {
 	public:
-		typedef container_base<storage_t, StringAllocator<storage_t> > base_t;
+		typedef container_base<storage_t, string_allocator<storage_t> > base_t;
 		const static std::size_t npos = -1;
 
 		stringbase_t() : base_t() {
@@ -527,6 +542,8 @@ namespace soe {
 		static_assert(sizeof(wchar_t) == sizeof(uint16_t),
 			"soe unicode implementation runs on 2 bytes");
 
+		DEFINE_CLIENT_STATIC(const unicode, empty_string);
+
 		unicode();
 		unicode(unicode&& s) noexcept;
 		explicit unicode(const uint32_t initialCapacity);
@@ -562,8 +579,6 @@ namespace soe {
 
 		unicode& operator=(const unicode& s);
 		unicode operator+ (const unicode& rhs) const;
-
-		static const unicode& empty_string();
 	};
 
 	bool operator==(const char* s, const soe::unicode& s2);

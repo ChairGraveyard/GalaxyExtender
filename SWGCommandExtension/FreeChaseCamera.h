@@ -7,11 +7,15 @@
 
 class FreeChaseCamera : public Object {
 public:
-	float getViewDistance() {
+	const float& getViewDistance() const {
+		return getMemoryReference<float>(VIEW_DISTANCE_OFFSET);
+	}
+	
+	float& getViewDistance() {
 		return getMemoryReference<float>(VIEW_DISTANCE_OFFSET);
 	}
 
 	void setViewDistance(float value) {
-		getMemoryReference<float>(VIEW_DISTANCE_OFFSET) = value;
+		getViewDistance() = value;
 	}
 };

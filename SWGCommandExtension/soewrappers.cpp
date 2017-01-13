@@ -4,8 +4,7 @@
 
 NetworkId const NetworkId::empty;
 
-//int soe::HooksStorage::count = 0;
-//std::pair<uint32_t, void*> soe::HooksStorage::hooks[256];
+SET_CLIENT_STATIC(soe::unicode::empty_string, 0x01918970);
 
 const uint32_t soecrctable[256] = {
 	0x0000000,
@@ -324,10 +323,4 @@ soe::unicode soe::unicode::operator+(const soe::unicode & rhs) const {
 	*(newstring.finish) = 0;
 
 	return newstring;
-}
-
-const soe::unicode& soe::unicode::empty_string() {
-	const static soe::unicode* soeAddress = reinterpret_cast<soe::unicode*>(0x01918970);
-
-	return *soeAddress;
 }

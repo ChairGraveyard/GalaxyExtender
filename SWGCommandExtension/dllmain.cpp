@@ -9,6 +9,7 @@
 #include "CuiChatParser.h"
 #include "Game.h"
 #include "TerrainObject.h"
+#include "SwgCuiLoginScreen.h"
 
 using namespace std;
 
@@ -42,6 +43,7 @@ void writeBytes(BYTE* address, const BYTE* values, int size) {
 }
 
 #define ATTACH_HOOK(X, Y) extern GENERATE_HOOK_TYPE(X) Y; DetourAttach((PVOID*) &Y, X);
+#define ATTACH_HOOK_THISCALL(CLASS, METHOD) DetourAttach((PVOID*)& ## CLASS ## _ ## METHOD ## _hook_t::original, ## CLASS ## _ ## METHOD ## _hook_t::fastHook);
 
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 {
@@ -54,6 +56,8 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 		DetourUpdateThread(GetCurrentThread());
 
 		// Direct function hooks.
+
+		ATTACH_HOOK_THISCALL(SwgCuiLoginScreen, onButtonPressed);
 
 		ATTACH_HOOK(CuiChatParser::parse, oldChatParse);
 		ATTACH_HOOK(TerrainObject::setHighLevelOfDetailThresholdHook, oldSetHighLoDThreshold);

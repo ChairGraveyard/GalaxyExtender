@@ -7,7 +7,7 @@
 
 Object::dyn_cast_t Object::soe_rt_dynamic_cast_func = (dyn_cast_t)SOE_RTDYNAMIC_CAST_ADDRESS;
 
-PVOID Object::dynamicCast(PVOID inptr, PVOID SrcType, PVOID TargetType) {
+PVOID Object::dynamicCast(PVOID inptr, const PVOID SrcType, const PVOID TargetType) {
 	/* this calls the ___RTDynamicCast that the client uses so we can cast between their objects with their own typeinfo data*/
 	return soe_rt_dynamic_cast_func(inptr, 0, SrcType, TargetType, 0);
 }

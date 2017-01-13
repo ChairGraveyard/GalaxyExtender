@@ -7,7 +7,7 @@
 
 class ClientCommandQueue {
 public:
-	static void enqueueCommand(uint32_t commandHashCode, const NetworkId& target = NetworkId::empty, const soe::unicode& parameters = soe::unicode::empty_string()) {
+	static void enqueueCommand(uint32_t commandHashCode, const NetworkId& target = NetworkId::empty, const soe::unicode& parameters = soe::unicode::empty_string) {
 		Call<CLIENTCOMMANDQUEUE_ENQUEUECOMMAND_ADDRESS,  /*func address*/
 			void, /*return type*/
 			uint32_t, const NetworkId&, const soe::unicode&>::run(commandHashCode, target, parameters);
