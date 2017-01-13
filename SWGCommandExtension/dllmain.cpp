@@ -8,6 +8,7 @@
 #include "CuiMediatorFactory.h"
 #include "CuiChatParser.h"
 #include "Game.h"
+#include "TerrainObject.h"
 
 using namespace std;
 
@@ -40,40 +41,6 @@ void writeBytes(BYTE* address, const BYTE* values, int size) {
 	VirtualProtect(address, size, oldProtect, &newProtect);
 }
 
-DWORD globalDetailJmpAddress = 0x85E1C1;
-DWORD globalDetailReturnJmp = 0x85E1C6;
-float globalDetailOverrideValue = 12.0f;
-
-/// Mid-Function Hooks
-///
-__declspec(naked) void globalDetailSliderHook()
-{
-	__asm
-	{
-		mov ebp, esp						// Do part of prologue we overwrote
-		mov eax, [ebp + 0x8]				// We probably don't need this since we overwrite the value.
-		mov eax, globalDetailOverrideValue	// Do our hack.
-		jmp[globalDetailReturnJmp]			// Return to normal execution.
-	}
-}
-
-DWORD terrainDistJmpAddress = 0x85E261;
-DWORD terrainDistReturnJmp = 0x85E266;
-float terrainDistanceOverrideValue = 40.0f;
-
-__declspec(naked) void terrainDistanceSliderHook()
-{
-	__asm
-	{
-		mov ebp, esp							// Do part of prologue we overwrote
-		mov eax, [ebp + 0x8]					// We probably don't need this since we overwrite the value.
-		mov eax, terrainDistanceOverrideValue	// Do our hack.
-		jmp[terrainDistReturnJmp]				// Return to normal execution.
-	}
-}
-///
-///
-
 #define ATTACH_HOOK(X, Y) extern GENERATE_HOOK_TYPE(X) Y; DetourAttach((PVOID*) &Y, X);
 
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
@@ -89,6 +56,8 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 		// Direct function hooks.
 
 		ATTACH_HOOK(CuiChatParser::parse, oldChatParse);
+		ATTACH_HOOK(TerrainObject::setHighLevelOfDetailThresholdHook, oldSetHighLoDThreshold);
+		ATTACH_HOOK(TerrainObject::setLevelOfDetailThresholdHook, oldSetLoDThreshold);
 
 		LONG errorCode = DetourTransactionCommit();
 
@@ -98,8 +67,6 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 			const BYTE newData[7] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
 			writeBytes((BYTE*)0xC8D258, newData, 7);
 			// Mid-function hooks for global detail and high detail terrain distance.
-			writeJmp((BYTE*)terrainDistJmpAddress, (DWORD)terrainDistanceSliderHook, 5);
-			writeJmp((BYTE*)globalDetailJmpAddress, (DWORD)globalDetailSliderHook, 5);
 						
 			// Show our loaded message (only displays if chat is already present).
 			Game::debugPrintUi("[LOADED] Settings Override Extensions by N00854180T");

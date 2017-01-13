@@ -13,9 +13,10 @@
 #include "ClientProceduralTerrainAppearance.h"
 #include "GameLanguageManager.h"
 #include "FreeChaseCamera.h"
+#include "TerrainObject.h"
 
-extern float terrainDistanceOverrideValue;
-extern float globalDetailOverrideValue;
+//extern float terrainDistanceOverrideValue;
+//extern float globalDetailOverrideValue;
 
 /// General Utilities
 ///
@@ -64,21 +65,32 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 			if (command == L"globaldetail")
 			{
 				float newVal = stof(args[1]);
+				float oldVal = TerrainObject::getLevelOfDetailThreshold();
 
-				globalDetailOverrideValue = newVal;
+				TerrainObject::setLevelOfDetailThreshold(newVal);
+
+				float newValAfterSetting = TerrainObject::getLevelOfDetailThreshold();
+
+				std::string values = "oldVal:" + std::to_string(oldVal) + " newValAfterSetting: " + std::to_string(newValAfterSetting);
 
 				// Tell the user to slide the slider to make the override take effect.				
-				Game::debugPrintUi("Global Detail Level changed! However, this setting will not take effect until you open the Options, click the Terrain tab, and move the Global Detail Level slider.");
+				Game::debugPrintUi(values.c_str());
 
 				handled = true;
 			} else if (command == L"highdetailterrain" || command == L"hdterrain")
 			{
 				float newVal = stof(args[1]);
 
-				terrainDistanceOverrideValue = newVal;
+				float oldVal = TerrainObject::getHighLevelOfDetailThreshold();
+
+				TerrainObject::setHighLevelOfDetailThreshold(newVal);
+
+				float newValAfterSetting = TerrainObject::getHighLevelOfDetailThreshold();
+
+				std::string values = "oldVal:" + std::to_string(oldVal) + " newValAfterSetting: " + std::to_string(newValAfterSetting);
 
 				// Tell the user to slide the slider to make the override take effect.												
-				Game::debugPrintUi("High Detail Terrain Distance changed! However, this setting will not take effect until you open the Options, click the Terrain tab, and move the High Detail Terrain Distance slider.");
+				Game::debugPrintUi(values.c_str());
 
 				handled = true;
 			} else if (command == L"radialflora")
@@ -115,8 +127,6 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 
 				auto camera = groundScene->getFreeChaseCamera();
 
-				Game::debugPrintUi("Note, you still must open Options -> Terrain and slide the Global Detail Level and High Detail Terrain Distance sliders for those settings to take effect.");
-
 				auto& setting = args[1];
 				if (setting == L"help")
 				{
@@ -132,9 +142,9 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 
 					camera->setViewDistance(1024);
 
-					globalDetailOverrideValue = 6;
+					TerrainObject::setLevelOfDetailThreshold(6);
 
-					terrainDistanceOverrideValue = 10;
+					TerrainObject::setHighLevelOfDetailThreshold(10);
 					ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(64);
 					ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(32);
 				} else if (setting == L"low")
@@ -143,9 +153,9 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 
 					camera->setViewDistance(1536);
 
-					globalDetailOverrideValue = 8;
+					TerrainObject::setLevelOfDetailThreshold(8);
 
-					terrainDistanceOverrideValue = 12;
+					TerrainObject::setHighLevelOfDetailThreshold(12);
 					ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(80);
 					ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(50);
 				} else if (setting == L"medium" || setting == L"med")
@@ -154,9 +164,9 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 
 					camera->setViewDistance(2048);
 
-					globalDetailOverrideValue = 9;
+					TerrainObject::setLevelOfDetailThreshold(9);
 					
-					terrainDistanceOverrideValue = 15;
+					TerrainObject::setHighLevelOfDetailThreshold(15);
 					ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(100);
 					ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(55);
 				} else if (setting == L"high")
@@ -165,9 +175,9 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 
 					camera->setViewDistance(4096);
 
-					globalDetailOverrideValue = 12;
+					TerrainObject::setLevelOfDetailThreshold(12);
 					
-					terrainDistanceOverrideValue = 30;
+					TerrainObject::setHighLevelOfDetailThreshold(30);
 					ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(128);
 					ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(64);
 				} else if (setting == L"ultra")
@@ -176,9 +186,9 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 
 					camera->setViewDistance(4096);
 
-					globalDetailOverrideValue = 16;
+					TerrainObject::setLevelOfDetailThreshold(16);
 					
-					terrainDistanceOverrideValue = 50;
+					TerrainObject::setHighLevelOfDetailThreshold(50);
 					ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(256);
 					ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(128);
 				} else

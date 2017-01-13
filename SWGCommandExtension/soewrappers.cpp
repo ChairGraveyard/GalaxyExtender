@@ -2,7 +2,7 @@
 #include "soewrappers.h"
 #include "NetworkId.h"
 
-NetworkId NetworkId::empty;
+NetworkId const NetworkId::empty;
 
 //int soe::HooksStorage::count = 0;
 //std::pair<uint32_t, void*> soe::HooksStorage::hooks[256];

@@ -3,6 +3,11 @@
 #include "soewrappers.h"
 
 class ClientProceduralTerrainAppearance {
+	class LevelOfDetail {
+	public:
+		
+	};
+
 protected:
 	DEFINE_CLIENT_STATIC(float, ms_staticNonCollidableFloraDistance);
 	DEFINE_CLIENT_STATIC(float, ms_dynamicNearFloraDistance);
