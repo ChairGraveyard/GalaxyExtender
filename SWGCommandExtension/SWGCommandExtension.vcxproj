@@ -166,18 +166,31 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CachedNetworkId.h" />
+    <ClInclude Include="ClientCommandQueue.h" />
     <ClInclude Include="ClientObject.h" />
+    <ClInclude Include="ClientProceduralTerrainAppearance.h" />
+    <ClInclude Include="ConfigClientTerrain.h" />
     <ClInclude Include="CreatureObject.h" />
-    <ClInclude Include="CuiConsoleHelper.h" />
+    <ClInclude Include="CuiChatParser.h" />
+    <ClInclude Include="CuiMediatorFactory.h" />
+    <ClInclude Include="FreeChaseCamera.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="GameLanguageManager.h" />
+    <ClInclude Include="GroundScene.h" />
     <ClInclude Include="IntangibleObject.h" />
+    <ClInclude Include="NetworkId.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="PlayerObject.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="soewrappers.h" />
+    <ClInclude Include="SwgCuiLoginScreen.h" />
     <ClInclude Include="TangibleObject.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="TerrainObject.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ClientProceduralTerrainAppearance.cpp" />
+    <ClCompile Include="CuiChatParser.cpp" />
     <ClCompile Include="dllmain.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -192,6 +205,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Game.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -201,6 +215,8 @@
     </ClCompile>
     <ClCompile Include="soewrappers.cpp" />
     <ClCompile Include="SWGCommandExtension.cpp" />
+    <ClCompile Include="SwgCuiLoginScreen.cpp" />
+    <ClCompile Include="TerrainObject.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
