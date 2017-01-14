@@ -8,6 +8,6 @@
 class SwgCuiLoginScreen : public Object {
 public:
 	void onButtonPressed(Object* uicontext);
+	
+	DEFINE_HOOOK_THISCALL(LOGINSCREEN_BUTTON_PRESSED, onButtonPressed, onButtonPressedOriginal);
 };
-
-DEFINE_HOOK_THISCALL(LOGINSCREEN_BUTTON_PRESSED, SwgCuiLoginScreen, void, onButtonPressed, Object*);

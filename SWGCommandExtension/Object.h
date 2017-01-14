@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <cstdint>
+#include <tuple>
 #include "NetworkId.h"
 
 #ifdef NDEBUG
@@ -53,13 +54,12 @@ public:
 };
 
 template<typename ThisType, typename C, typename ReturnType, typename ... Args>
-class HookThis {
-public:
+struct HookThisOld {
 	static C newMethod;
 
 	static ReturnType __fastcall fastHook(ThisType thisPointer, void*, Args... args) {
-		ThisType object = (ThisType)thisPointer;
-		(object->*(HookThis<ThisType, C, ReturnType, Args...>::newMethod))(args...);
+		ThisType object = (ThisType) thisPointer;
+		return (object->*(HookThisOld<ThisType, C, ReturnType, Args...>::newMethod))(args...);
 	}
 
 	typedef decltype(&fastHook) original_t;
@@ -67,8 +67,53 @@ public:
 	static original_t original;
 
 	static ReturnType runOriginal(ThisType thisPointer, Args... args) {
-		original(thisPointer, 0, args...);
+		return original(thisPointer, 0, args...);
 	}
+};
+
+template<std::size_t Address, class newMethod_t, class original_t> 
+class HookStorage {
+public:
+	const static std::size_t address = Address;
+
+	static newMethod_t newMethod;
+	static original_t original;
+};
+
+template<std::size_t Address, class newMethod_t, class original_t>
+newMethod_t HookStorage<Address, newMethod_t, original_t>::newMethod;
+
+template<std::size_t Address, class newMethod_t, class original_t>
+original_t HookStorage<Address, newMethod_t, original_t>::original = (original_t) Address;
+
+template<std::size_t, typename> struct HookThis;
+
+template<std::size_t Address, class C, class R, class... Args>
+struct HookThis<Address, R(C::*)(Args...)> {
+	using return_type = R;
+
+	static constexpr std::size_t arity = sizeof...(Args);
+
+	template <std::size_t N>
+	struct argument {
+		static_assert(N < arity, "error: invalid parameter index.");
+		using type = typename std::tuple_element<N, std::tuple<Args...>>::type;
+	};
+
+	typedef R(C::*newMethod_t)(Args...);
+
+	static R __fastcall fastcallHook(C* object, void*, Args... args) {
+		return (object->*(hookStorage_t::newMethod))(args...);
+	}
+
+	typedef decltype(&fastcallHook) original_t;
+
+	typedef HookStorage<Address, newMethod_t, original_t> hookStorage_t;
+
+	static R run(C* thisPointer, Args... args) {
+		return hookStorage_t::original(thisPointer, 0, args...);
+	}
+
 };
 
 class Object {

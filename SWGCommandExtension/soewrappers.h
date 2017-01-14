@@ -8,6 +8,7 @@
 #include <wchar.h>
 #include <vector>
 #include <utility>
+#include <tuple>
 
 #define STRALLOCATOR_ADDRESS 0x012EA770 /*for sizes <= 0x80, used in strings*/
 #define SOEALLOCATOR_ADDRESS 0x00AC15C0 /*for sizes > 0x80 and array boolean as false*/
@@ -24,19 +25,86 @@
 #define DEFINE_CLIENT_STATIC(x, y) static x ## & y;
 #define SET_CLIENT_STATIC(x, y) decltype(x) x = *reinterpret_cast<std::add_pointer<std::remove_reference<decltype(x)>::type>::type>(y);
 
-#define SET_HOOK_THISCALL(CLASS, METHOD, RETURNTYPE, HOOKOBJECT, ...) \
+template<class F>
+struct function_traits;
+
+template<class F>
+struct function_traits;
+
+// function pointer
+template<class R, class... Args>
+struct function_traits<R(*)(Args...)> : public function_traits<R(Args...)> {
+};
+
+template<class R, class... Args>
+struct function_traits<R(Args...)> {
+	using return_type = R;
+
+	static constexpr std::size_t arity = sizeof...(Args);
+
+	template <std::size_t N>
+	struct argument {
+		static_assert(N < arity, "error: invalid parameter index.");
+		using type = typename std::tuple_element<N, std::tuple<Args...>>::type;
+	};
+};
+
+// member function pointer
+template<class C, class R, class... Args>
+struct function_traits<R(C::*)(Args...)> : public function_traits<R(C&, Args...)> {
+};
+
+// const member function pointer
+template<class C, class R, class... Args>
+struct function_traits<R(C::*)(Args...) const> : public function_traits<R(C&, Args...)> {
+};
+
+// member object pointer
+template<class C, class R>
+struct function_traits<R(C::*)> : public function_traits<R(C&)> {
+};
+
+// functor
+template<class F>
+struct function_traits {
+private:
+	using call_type = function_traits<decltype(&F::type::operator())>;
+public:
+	using return_type = typename call_type::return_type;
+
+	static constexpr std::size_t arity = call_type::arity - 1;
+
+	template <std::size_t N>
+	struct argument {
+		static_assert(N < arity, "error: invalid parameter index.");
+		using type = typename call_type::template argument<N + 1>::type;
+	};
+};
+
+template<class F>
+struct function_traits<F&> : public function_traits<F> {
+};
+
+template<class F>
+struct function_traits<F&&> : public function_traits<F> {
+};
+
+#define DEFINE_HOOOK_THISCALL(ADDRESS, METHOD, ORIGINAL) typedef HookThis<ADDRESS, decltype(&METHOD)> ORIGINAL; \
+	typedef HookThis<ADDRESS, decltype(&METHOD)> METHOD##_hook_t;
+
+#define GENERATE_HOOK_THIS_TYPE_OLD(CLASS, METHOD, RETURNTYPE, ...) HookThis<CLASS ## *, decltype(& ## CLASS ## :: ## METHOD), RETURNTYPE, ##__VA_ARGS__ ## >
+
+#define SET_HOOK_THISCALL_OLD(CLASS, METHOD, RETURNTYPE, HOOKOBJECT, ...) \
 	typedef GENERATE_HOOK_THIS_TYPE(CLASS, METHOD, RETURNTYPE, ##__VA_ARGS__) HOOKOBJECT;
 
-#define GENERATE_HOOK_THIS_TYPE(CLASS, METHOD, RETURNTYPE, ...) HookThis<CLASS ## *, decltype(& ## CLASS ## :: ## METHOD), RETURNTYPE, ##__VA_ARGS__ ## >
-
-#define DEFINE_HOOK_THISCALL(ADDRESS, CLASS, RETURNTYPE, METHOD, ...) \
+#define DEFINE_HOOK_THISCALL_OLD(ADDRESS, CLASS, RETURNTYPE, METHOD, ...) \
 	template<typename ThisType, typename C, typename ReturnType, typename ... Args> \
 	C HookThis<ThisType, C, ReturnType, Args...>::newMethod = & ## CLASS ## :: ## METHOD; \
 	\
 	template<typename ThisType, typename C, typename ReturnType, typename ... Args> \
 	typename HookThis<ThisType, C, ReturnType, Args...>::original_t HookThis<ThisType, C, ReturnType, Args...>::original = (typename HookThis<ThisType, C, ReturnType, Args...>::original_t)(ADDRESS); \
 	\
-	typedef GENERATE_HOOK_THIS_TYPE(CLASS, METHOD, RETURNTYPE, ##__VA_ARGS__) CLASS ## _ ## METHOD ## _hook_t;
+	typedef GENERATE_HOOK_THIS_TYPE_OLD(CLASS, METHOD, RETURNTYPE, ##__VA_ARGS__) CLASS ## _ ## METHOD ## _hook_t;
 
 
 namespace soe {
