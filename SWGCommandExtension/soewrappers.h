@@ -25,70 +25,6 @@
 #define DEFINE_CLIENT_STATIC(x, y) static x ## & y;
 #define SET_CLIENT_STATIC(x, y) decltype(x) x = *reinterpret_cast<std::add_pointer<std::remove_reference<decltype(x)>::type>::type>(y);
 
-template<class F>
-struct function_traits;
-
-template<class F>
-struct function_traits;
-
-// function pointer
-template<class R, class... Args>
-struct function_traits<R(*)(Args...)> : public function_traits<R(Args...)> {
-};
-
-template<class R, class... Args>
-struct function_traits<R(Args...)> {
-	using return_type = R;
-
-	static constexpr std::size_t arity = sizeof...(Args);
-
-	template <std::size_t N>
-	struct argument {
-		static_assert(N < arity, "error: invalid parameter index.");
-		using type = typename std::tuple_element<N, std::tuple<Args...>>::type;
-	};
-};
-
-// member function pointer
-template<class C, class R, class... Args>
-struct function_traits<R(C::*)(Args...)> : public function_traits<R(C&, Args...)> {
-};
-
-// const member function pointer
-template<class C, class R, class... Args>
-struct function_traits<R(C::*)(Args...) const> : public function_traits<R(C&, Args...)> {
-};
-
-// member object pointer
-template<class C, class R>
-struct function_traits<R(C::*)> : public function_traits<R(C&)> {
-};
-
-// functor
-template<class F>
-struct function_traits {
-private:
-	using call_type = function_traits<decltype(&F::type::operator())>;
-public:
-	using return_type = typename call_type::return_type;
-
-	static constexpr std::size_t arity = call_type::arity - 1;
-
-	template <std::size_t N>
-	struct argument {
-		static_assert(N < arity, "error: invalid parameter index.");
-		using type = typename call_type::template argument<N + 1>::type;
-	};
-};
-
-template<class F>
-struct function_traits<F&> : public function_traits<F> {
-};
-
-template<class F>
-struct function_traits<F&&> : public function_traits<F> {
-};
-
 #define DEFINE_HOOOK_THISCALL(ADDRESS, METHOD, ORIGINAL) typedef HookThis<ADDRESS, decltype(&METHOD)> ORIGINAL; \
 	typedef HookThis<ADDRESS, decltype(&METHOD)> METHOD##_hook_t;
 
@@ -108,6 +44,70 @@ struct function_traits<F&&> : public function_traits<F> {
 
 
 namespace soe {
+	template<class F>
+	struct function_traits;
+
+	template<class F>
+	struct function_traits;
+
+	// function pointer
+	template<class R, class... Args>
+	struct function_traits<R(*)(Args...)> : public function_traits<R(Args...)> {
+	};
+
+	template<class R, class... Args>
+	struct function_traits<R(Args...)> {
+		using return_type = R;
+
+		static constexpr std::size_t arity = sizeof...(Args);
+
+		template <std::size_t N>
+		struct argument {
+			static_assert(N < arity, "error: invalid parameter index.");
+			using type = typename std::tuple_element<N, std::tuple<Args...>>::type;
+		};
+	};
+
+	// member function pointer
+	template<class C, class R, class... Args>
+	struct function_traits<R(C::*)(Args...)> : public function_traits<R(C&, Args...)> {
+	};
+
+	// const member function pointer
+	template<class C, class R, class... Args>
+	struct function_traits<R(C::*)(Args...) const> : public function_traits<R(C&, Args...)> {
+	};
+
+	// member object pointer
+	template<class C, class R>
+	struct function_traits<R(C::*)> : public function_traits<R(C&)> {
+	};
+
+	// functor
+	template<class F>
+	struct function_traits {
+	private:
+		using call_type = function_traits<decltype(&F::type::operator())>;
+	public:
+		using return_type = typename call_type::return_type;
+
+		static constexpr std::size_t arity = call_type::arity - 1;
+
+		template <std::size_t N>
+		struct argument {
+			static_assert(N < arity, "error: invalid parameter index.");
+			using type = typename call_type::template argument<N + 1>::type;
+		};
+	};
+
+	template<class F>
+	struct function_traits<F&> : public function_traits<F> {
+	};
+
+	template<class F>
+	struct function_traits<F&&> : public function_traits<F> {
+	};
+
 	typedef void*(__cdecl* strallocator_t)(uint32_t);
 	typedef void*(__cdecl* strallocator2_t)(uint32_t);
 	typedef void(__cdecl* strdeallocator1_t)(void*);

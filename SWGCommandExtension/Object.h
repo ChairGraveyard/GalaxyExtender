@@ -74,7 +74,7 @@ struct HookThisOld {
 template<std::size_t Address, class newMethod_t, class original_t> 
 class HookStorage {
 public:
-	const static std::size_t address = Address;
+	static constexpr std::size_t address = Address;
 
 	static newMethod_t newMethod;
 	static original_t original;
@@ -102,16 +102,16 @@ struct HookThis<Address, R(C::*)(Args...)> {
 
 	typedef R(C::*newMethod_t)(Args...);
 
-	static R __fastcall fastcallHook(C* object, void*, Args... args) {
+	static R __thiscall thiscallHook(C* object, Args... args) {
 		return (object->*(hookStorage_t::newMethod))(args...);
 	}
 
-	typedef decltype(&fastcallHook) original_t;
+	typedef decltype(&thiscallHook) original_t;
 
 	typedef HookStorage<Address, newMethod_t, original_t> hookStorage_t;
 
 	static R run(C* thisPointer, Args... args) {
-		return hookStorage_t::original(thisPointer, 0, args...);
+		return hookStorage_t::original(thisPointer, args...);
 	}
 
 };
