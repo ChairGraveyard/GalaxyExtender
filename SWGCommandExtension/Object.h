@@ -18,6 +18,8 @@
 	}
 #endif
 
+#define PTR_TO_OBJECT_TYPEINFO 0x01868A84
+
 class CreatureObject;
 
 /*
@@ -86,27 +88,17 @@ newMethod_t HookStorage<Address, newMethod_t, original_t>::newMethod;
 template<std::size_t Address, class newMethod_t, class original_t>
 original_t HookStorage<Address, newMethod_t, original_t>::original = (original_t) Address;
 
-template<std::size_t, typename> struct HookThis;
+template<std::size_t, typename> struct Hook;
 
 template<std::size_t Address, class C, class R, class... Args>
-struct HookThis<Address, R(C::*)(Args...)> {
-	using return_type = R;
-
-	static constexpr std::size_t arity = sizeof...(Args);
-
-	template <std::size_t N>
-	struct argument {
-		static_assert(N < arity, "error: invalid parameter index.");
-		using type = typename std::tuple_element<N, std::tuple<Args...>>::type;
-	};
-
+struct Hook<Address, R(C::*)(Args...)> {
 	typedef R(C::*newMethod_t)(Args...);
 
-	static R __thiscall thiscallHook(C* object, Args... args) {
+	static R __thiscall callHook(C* object, Args... args) {
 		return (object->*(hookStorage_t::newMethod))(args...);
 	}
 
-	typedef decltype(&thiscallHook) original_t;
+	typedef decltype(&callHook) original_t;
 
 	typedef HookStorage<Address, newMethod_t, original_t> hookStorage_t;
 
@@ -116,8 +108,27 @@ struct HookThis<Address, R(C::*)(Args...)> {
 
 };
 
+template<std::size_t Address, class R, class... Args>
+struct Hook<Address, R(*)(Args...)> {
+	typedef R(*newMethod_t)(Args...);
+
+	static R callHook(Args... args) {
+		return hookStorage_t::newMethod(args...);
+	}
+
+	typedef decltype(&callHook) original_t;
+
+	typedef HookStorage<Address, newMethod_t, original_t> hookStorage_t;
+
+	static R run(Args... args) {
+		return hookStorage_t::original(args...);
+	}
+};
+
 class Object {
 public:
+	constexpr static uint32_t RTTI = PTR_TO_OBJECT_TYPEINFO;
+
 	template<typename T>
 	const T& getMemoryReference(int offset) const {
 		return *reinterpret_cast<T*>(reinterpret_cast<uint32_t>(this) + offset);
@@ -128,9 +139,14 @@ public:
 		return *reinterpret_cast<T*>(reinterpret_cast<uint32_t>(this) + offset);
 	}
 
-	template<uint32_t FunctionAddress, typename Return, typename ... ArgumentTypes>
+	template<int FunctionAddress, typename Return, typename ... ArgumentTypes>
 	Return runMethod(ArgumentTypes ... args) {
 		return ThisCall<FunctionAddress, Return, Object*, ArgumentTypes...>::run(this, args...);
+	}
+
+	template<int FunctionAddress, typename Return, typename ... ArgumentTypes>
+	Return runMethod(ArgumentTypes ... args) const {
+		return ThisCall<FunctionAddress, Return, decltype(this), ArgumentTypes...>::run(this, args...);
 	}
 
 	template<uint32_t VirtualOffset, typename Return, typename ... ArgumentTypes>

@@ -11,5 +11,7 @@
 
 class CuiChatParser {
 public:
-	static bool parse(const soe::unicode& command, soe::unicode& result, uint32_t chatRoomID, bool useChatRoom);	
+	static bool parse(const soe::unicode& command, soe::unicode& result, uint32_t chatRoomID, bool useChatRoom);
+
+	DEFINE_HOOOK(COMMAND_HANDLER_ADDRESS, parse, originalParse);
 };

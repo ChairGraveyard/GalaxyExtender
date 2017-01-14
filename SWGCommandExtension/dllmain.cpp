@@ -42,10 +42,8 @@ void writeBytes(BYTE* address, const BYTE* values, int size) {
 	VirtualProtect(address, size, oldProtect, &newProtect);
 }
 
-#define ATTACH_HOOK(X, Y) extern GENERATE_HOOK_TYPE(X) Y; DetourAttach((PVOID*) &Y, X);
-#define ATTACH_HOOK_THISCALLOLD(CLASS, METHOD) DetourAttach((PVOID*)& ## CLASS ## _ ## METHOD ## _hook_t::original, ## CLASS ## _ ## METHOD ## _hook_t::fastHook);
-#define ATTACH_HOOK_THISCALL(CLASS, METHOD) CLASS::METHOD##_hook_t::hookStorage_t::newMethod = &CLASS::METHOD; \
-											DetourAttach((PVOID*) &CLASS::METHOD##_hook_t::hookStorage_t::original, (PVOID) CLASS::METHOD##_hook_t::thiscallHook);
+#define ATTACH_HOOK(METHOD) METHOD##_hook_t::hookStorage_t::newMethod = &METHOD; \
+											DetourAttach((PVOID*) &METHOD##_hook_t::hookStorage_t::original, (PVOID) METHOD##_hook_t::callHook);
 
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 {
@@ -58,11 +56,10 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 		DetourUpdateThread(GetCurrentThread());
 
 		// Direct function hooks.
-		ATTACH_HOOK_THISCALL(SwgCuiLoginScreen, onButtonPressed);
-
-		ATTACH_HOOK(CuiChatParser::parse, oldChatParse);
-		ATTACH_HOOK(TerrainObject::setHighLevelOfDetailThresholdHook, oldSetHighLoDThreshold);
-		ATTACH_HOOK(TerrainObject::setLevelOfDetailThresholdHook, oldSetLoDThreshold);
+		ATTACH_HOOK(SwgCuiLoginScreen::onButtonPressed);
+		ATTACH_HOOK(CuiChatParser::parse);
+		ATTACH_HOOK(TerrainObject::setHighLevelOfDetailThresholdHook);
+		ATTACH_HOOK(TerrainObject::setLevelOfDetailThresholdHook);
 
 		LONG errorCode = DetourTransactionCommit();
 

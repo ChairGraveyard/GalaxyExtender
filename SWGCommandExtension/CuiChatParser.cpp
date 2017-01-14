@@ -38,8 +38,6 @@ float stof(const soe::unicode& str) {
 	return std::stof(str.c_str());
 }
 
-DEFINE_HOOOK(COMMAND_HANDLER_ADDRESS, CuiChatParser::parse, oldChatParse);
-
 bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& resultUnicode, uint32_t chatRoomID, bool useChatRoom) {
 	// Create local string for convenience.
 	soe::vector<soe::unicode> args;
@@ -50,21 +48,18 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 
 	// Make sure this is a slash command before interpreting.
 	auto foundSlash = incomingCommand.find(L"/");
-	if (foundSlash != soe::unicode::npos)
-	{
+	if (foundSlash != soe::unicode::npos) {
 		// Strip the slash.
 		auto afterSlash = incomingCommand.substr(foundSlash + 1);
 
 		// Break into arguments.
 		split(afterSlash, L' ', args);
 
-		if (args.size() >= 2)
-		{
+		if (args.size() >= 2) {
 			auto &command = args[0];
 
 			// Handle global detail command.
-			if (command == L"globaldetail")
-			{
+			if (command == L"globaldetail") {
 				float newVal = stof(args[1]);
 				float oldVal = TerrainObject::getLevelOfDetailThreshold();
 
@@ -78,8 +73,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				Game::debugPrintUi(values.c_str());
 
 				handled = true;
-			} else if (command == L"highdetailterrain" || command == L"hdterrain")
-			{
+			} else if (command == L"highdetailterrain" || command == L"hdterrain") {
 				float newVal = stof(args[1]);
 
 				float oldVal = TerrainObject::getHighLevelOfDetailThreshold();
@@ -94,24 +88,21 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				Game::debugPrintUi(values.c_str());
 
 				handled = true;
-			} else if (command == L"radialflora")
-			{
+			} else if (command == L"radialflora") {
 				float newVal = stof(args[1]);
 				ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(newVal);
 
 				Game::debugPrintUi("Radial Flora distance set.");
 
 				handled = true;
-			} else if (command == L"noncollidableflora" || command == L"ncflora")
-			{
+			} else if (command == L"noncollidableflora" || command == L"ncflora") {
 				float newVal = stof(args[1]);
 				ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(newVal);
 
 				Game::debugPrintUi("Non-Collidable Flora distance set.");
 
 				handled = true;
-			} else if (command == L"viewdistance" || command == L"vd")
-			{
+			} else if (command == L"viewdistance" || command == L"vd") {
 				if (camera) {
 					float newVal = stof(args[1]);
 
@@ -121,10 +112,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				}
 
 				handled = true;
-			} else if (command == L"overrideall" || command == L"setall")
-			{
-
-
+			} else if (command == L"overrideall" || command == L"setall") {
 				auto& setting = args[1];
 				if (setting == L"help")
 				{
@@ -134,8 +122,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					Game::debugPrintUi("Medium - View Distance: 2048, Global Detail: 9, High Detail Terrain: 15, Radial Flora: 100, Non-Collidable Flora: 55");
 					Game::debugPrintUi("High - View Distance: 4096, Global Detail: 12, High Detail Terrain: 30, Radial Flora: 128, Non-Collidable Flora: 64");
 					Game::debugPrintUi("Ultra - View Distance: 4096, Global Detail: 16, High Detail Terrain: 50, Radial Flora: 256, Non-Collidable Flora: 128");
-				} else if (setting == L"default")
-				{
+				} else if (setting == L"default") {
 					Game::debugPrintUi("Default - View Distance: 1024, Global Detail: 6, High Detail Terrain: 10, Radial Flora: 64, Non-Collidable Flora: 32");
 
 					if (camera)
@@ -146,8 +133,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					TerrainObject::setHighLevelOfDetailThreshold(10);
 					ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(64);
 					ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(32);
-				} else if (setting == L"low")
-				{
+				} else if (setting == L"low") {
 					Game::debugPrintUi("Low - View Distance: 1536, Global Detail: 8, High Detail Terrain: 12, Radial Flora: 80, Non-Collidable Flora: 50");
 
 					if (camera)
@@ -158,8 +144,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					TerrainObject::setHighLevelOfDetailThreshold(12);
 					ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(80);
 					ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(50);
-				} else if (setting == L"medium" || setting == L"med")
-				{
+				} else if (setting == L"medium" || setting == L"med") {
 					Game::debugPrintUi("Medium - View Distance: 2048, Global Detail: 9, High Detail Terrain: 15, Radial Flora: 100, Non-Collidable Flora: 55");
 
 					if (camera)
@@ -170,8 +155,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					TerrainObject::setHighLevelOfDetailThreshold(15);
 					ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(100);
 					ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(55);
-				} else if (setting == L"high")
-				{
+				} else if (setting == L"high") {
 					Game::debugPrintUi("High - View Distance: 4096, Global Detail: 12, High Detail Terrain: 30, Radial Flora: 128, Non-Collidable Flora: 64");
 
 					if (camera)
@@ -182,8 +166,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					TerrainObject::setHighLevelOfDetailThreshold(30);
 					ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(128);
 					ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(64);
-				} else if (setting == L"ultra")
-				{
+				} else if (setting == L"ultra") {
 					Game::debugPrintUi("Ultra - View Distance: 4096, Global Detail: 16, High Detail Terrain: 50, Radial Flora: 256, Non-Collidable Flora: 128");
 
 					if (camera)
@@ -201,12 +184,10 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 			}
 
 			// Check for other commands
-		} else if (afterSlash.size() > 0)
-		{
+		} else if (afterSlash.size() > 0) {
 			auto &command = afterSlash;
 
-			if (command == L"assist2")
-			{
+			if (command == L"assist2") {
 				CreatureObject* creature = Game::getPlayerCreature();
 				auto& lookAtTarget = creature->getLookAtTarget();
 				Object* obj = lookAtTarget.getObject();
@@ -225,9 +206,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				}
 
 				handled = 1;
-			}
-			if (command == L"testhooks") 
-			{
+			} if (command == L"testhooks") {
 				Object* console = CuiMediatorFactory::get("DebugInfoPage");
 
 				if (console != nullptr) {
@@ -303,12 +282,10 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 
 				handled = true;
 			}
-			if (command == L"getcurrenthealth")
-			{
+			if (command == L"getcurrenthealth") {
 				CreatureObject* creature = Game::getPlayerCreature();
 
-				if (creature)
-				{
+				if (creature) {
 					int healthValue = creature->getAttribute(CreatureObject::Health);
 
 					char message[1024];
@@ -316,15 +293,12 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 						healthValue);
 
 					Game::debugPrintUi(message);
-				} 
-				else
-				{
+				}  else {
 					Game::debugPrintUi("Main Player CreatureObject is null");
 				}
 
 				handled = true;
-			} else if (command == L"getradialflora")
-			{
+			} else if (command == L"getradialflora") {
 				double radialDist = ClientProceduralTerrainAppearance::getDynamicNearFloraDistance();
 				auto radialDistString = std::to_string(radialDist);
 
@@ -332,8 +306,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				Game::debugPrintUi(radialDistString.c_str());
 
 				handled = true;
-			} else if (command == L"getnoncollidableflora" || command == L"getncflora")
-			{
+			} else if (command == L"getnoncollidableflora" || command == L"getncflora") {
 				double ncDist = ClientProceduralTerrainAppearance::getStaticNonCollidableFloraDistance();
 				auto ncDistString = std::to_string(ncDist);
 
@@ -341,8 +314,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				Game::debugPrintUi(ncDistString.c_str());
 
 				handled = true;
-			} else if (command == L"getviewdistance" || command == L"getvd")
-			{
+			} else if (command == L"getviewdistance" || command == L"getvd") {
 				if (camera) {
 					auto viewDistString = std::to_string(camera->getViewDistance());
 
@@ -351,8 +323,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				}
 
 				handled = true;
-			} else if (command == L"exthelp")
-			{
+			} else if (command == L"exthelp") {
 				Game::debugPrintUi("[COMMAND HELP] Settings Override Extensions by N00854180T");
 				Game::debugPrintUi("/globaldetail X - sets the Global Detail Level to X, valid ranges are 1-24. You must move the slider in Terrain options AFTER using this command.");
 				Game::debugPrintUi("<hdterrain|/highdetailterrain> X - sets the High Detail Terrain Distance to X, valid ranges are 1-50. You must move the slider in Terrain options AFTER using this command.");
@@ -374,7 +345,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 	// If we handled the command above, don't call the original handler
 	// and return 1 to indicate a successfully handled command.
 	if (!handled)
-		return oldChatParse(incomingCommand, resultUnicode, chatRoomID, useChatRoom);
+		return originalParse::run(incomingCommand, resultUnicode, chatRoomID, useChatRoom);
 	
 	return true;
 }

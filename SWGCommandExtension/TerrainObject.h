@@ -27,6 +27,9 @@ public:
 	static void setHighLevelOfDetailThresholdHook(float levelOfDetail);
 	static void setLevelOfDetailThresholdHook(float levelOfDetail);
 
+	DEFINE_HOOOK(HIGHLODADDRESS, setHighLevelOfDetailThresholdHook, oldSetHighLoDThreshold);
+	DEFINE_HOOOK(SETLODADDRESS, setLevelOfDetailThresholdHook, oldSetLoDThreshold);
+
 	static float getHighLevelOfDetailThreshold() {
 		return Call<GETHIGHLOADADDRESS, float>::run();
 	}

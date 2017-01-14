@@ -20,19 +20,19 @@
 
 #define EMPTY_CONTAINER_INITIAL_OBJECTS 8
 
-#define GENERATE_HOOK_TYPE(x) decltype(&x)
-#define DEFINE_HOOOK(x, y, z) typedef GENERATE_HOOK_TYPE(y) z ## _t; z ## _t z = (decltype(&y)) x;
 #define DEFINE_CLIENT_STATIC(x, y) static x ## & y;
 #define SET_CLIENT_STATIC(x, y) decltype(x) x = *reinterpret_cast<std::add_pointer<std::remove_reference<decltype(x)>::type>::type>(y);
 
-#define DEFINE_HOOOK_THISCALL(ADDRESS, METHOD, ORIGINAL) typedef HookThis<ADDRESS, decltype(&METHOD)> ORIGINAL; \
-	typedef HookThis<ADDRESS, decltype(&METHOD)> METHOD##_hook_t;
+#define DEFINE_HOOOK_THISCALL(ADDRESS, METHOD, ORIGINAL) typedef Hook<ADDRESS, decltype(&METHOD)> ORIGINAL; \
+	typedef Hook<ADDRESS, decltype(&METHOD)> METHOD##_hook_t;
 
+#define DEFINE_HOOOK DEFINE_HOOOK_THISCALL
+
+#define GENERATE_HOOK_TYPE_OLD(x) decltype(&x)
+#define DEFINE_HOOOK_OLD(x, y, z) typedef GENERATE_HOOK_TYPE(y) z ## _t; z ## _t z = (decltype(&y)) x;*/
 #define GENERATE_HOOK_THIS_TYPE_OLD(CLASS, METHOD, RETURNTYPE, ...) HookThis<CLASS ## *, decltype(& ## CLASS ## :: ## METHOD), RETURNTYPE, ##__VA_ARGS__ ## >
-
 #define SET_HOOK_THISCALL_OLD(CLASS, METHOD, RETURNTYPE, HOOKOBJECT, ...) \
 	typedef GENERATE_HOOK_THIS_TYPE(CLASS, METHOD, RETURNTYPE, ##__VA_ARGS__) HOOKOBJECT;
-
 #define DEFINE_HOOK_THISCALL_OLD(ADDRESS, CLASS, RETURNTYPE, METHOD, ...) \
 	template<typename ThisType, typename C, typename ReturnType, typename ... Args> \
 	C HookThis<ThisType, C, ReturnType, Args...>::newMethod = & ## CLASS ## :: ## METHOD; \
@@ -200,7 +200,7 @@ namespace soe {
 		}
 
 		//gotta find the reallocs.. for now doing new allocate + copy instead on expand
-		void ensureCapacity(uint32_t newSize);
+		void ensureCapacity(std::size_t newSize);
 
 	public:
 		container_base() {
@@ -284,11 +284,11 @@ namespace soe {
 			return *(end() - 1);
 		}
 
-		uint32_t size() const noexcept {
+		std::size_t size() const noexcept {
 			return finish - start;
 		}
 
-		uint32_t capacity() const noexcept {
+		std::size_t capacity() const noexcept {
 			return endOfStorage - start;
 		}
 
@@ -343,9 +343,9 @@ namespace soe {
 	}
 
 	template <typename storage_t, class Allocator>
-	void container_base<storage_t, Allocator>::ensureCapacity(uint32_t newSize) {
-		uint32_t oldSize = endOfStorage - start;
-		uint32_t oldFinishOffset = finish - start;
+	void container_base<storage_t, Allocator>::ensureCapacity(std::size_t newSize) {
+		std::size_t oldSize = endOfStorage - start;
+		std::size_t oldFinishOffset = finish - start;
 
 		if (newSize <= oldSize)
 			return;
@@ -572,6 +572,10 @@ namespace soe {
 			return stringbase_t<char>::substr<string>(pos, len);
 		}
 
+		std::string to_stdstring() const {
+			return std::string(c_str());
+		}
+
 		string& operator=(const string& s);
 
 		string operator+ (const string& rhs) const;
@@ -641,6 +645,10 @@ namespace soe {
 
 		std::size_t find(const unicode& str, std::size_t pos = 0) const noexcept;
 
+		std::wstring to_stdwstring() const {
+			return std::wstring(c_str());
+		}
+
 		bool operator==(const unicode& str) const;
 		bool operator==(const char* str) const;
 		bool operator==(const wchar_t* str) const;
@@ -652,4 +660,21 @@ namespace soe {
 	bool operator==(const char* s, const soe::unicode& s2);
 
 	template <typename T> using vector = container_base<T>;
+
+	template<typename T>
+	std::vector<T> to_stdvector(const soe::vector<T>& incoming) {
+		auto size = incoming.size();
+
+		if (size == 0)
+			return std::vector<T>();
+
+		std::vector<T> vec(incoming.size());
+
+		for (const auto& obj : incoming) {
+			vec.push_back(obj);
+		}
+
+		return vec;
+	}
+
 }

@@ -9,10 +9,6 @@ public:
 	}
 
 	bool speaksLanguage(int langid) const {
-#ifdef USEJUMPTOCLIENTHACK
-		JUMPTOCLIENT(0x65FEA0);
-#else
-		return ThisCall<0x65FEA0, bool, decltype(this), int>::run(this, langid);
-#endif
+		return runMethod<0x65FEA0, bool>(langid);
 	}
 };

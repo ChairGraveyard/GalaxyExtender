@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "Object.h"
 
-#define PTR_TO_OBJECT_TYPEINFO (void*) 0x01868A84
-#define PTR_TO_CREATUREOBJECT_TYPINFO (void*) 0x01869148
+#include "CreatureObject.h"
+
 #define SOE_RTDYNAMIC_CAST_ADDRESS 0x0131E6F1;
 
 Object::dyn_cast_t Object::soe_rt_dynamic_cast_func = (dyn_cast_t)SOE_RTDYNAMIC_CAST_ADDRESS;
@@ -17,5 +17,5 @@ bool Object::isCreatureObject() {
 }
 
 CreatureObject* Object::asCreatureObject() {
-	return reinterpret_cast<CreatureObject*>(dynamicCast(this, PTR_TO_OBJECT_TYPEINFO, PTR_TO_CREATUREOBJECT_TYPINFO));
+	return reinterpret_cast<CreatureObject*>(dynamicCast(this, (PVOID) Object::RTTI, (PVOID) CreatureObject::RTTI));
 }

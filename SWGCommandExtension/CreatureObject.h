@@ -6,11 +6,15 @@
 
 #include <vector>
 
+#define PTR_TO_CREATUREOBJECT_TYPINFO 0x01869148
+
 //complete size 0x9B8
 class CreatureObject : public TangibleObject {
 protected:
 	uint8_t clientCreatureObjectData[0x5f0]; /*this is to at least make the compiler calculate the right sizeof of the object*/
 public:
+	constexpr static uint32_t RTTI = PTR_TO_CREATUREOBJECT_TYPINFO;
+
 	enum Attribute { Health = 0, Strength, Constitution, Action, Quickness, Stamina, Mind, Focus, Willpower };
 
 	CreatureObject() {
@@ -45,11 +49,7 @@ public:
 	}
 
 	ClientObject* getEquippedObject(const char* slotName) {
-#ifdef USEJUMPTOCLIENTHACK
-		JUMPTOCLIENT(0x431970);
-#else
-		return ThisCall<0x431970, ClientObject*, decltype(this), const char*>::run(this, slotName);
-#endif
+		return runMethod<0x431970, ClientObject*>(slotName);
 	}
 
 	CachedNetworkId& getLookAtTarget() {
@@ -57,11 +57,7 @@ public:
 	}
 
 	void setState(int8_t state, bool value) {
-#ifdef USEJUMPTOCLIENTHACK
-		JUMPTOCLIENT(0x4352C0);
-#else
-		ThisCall<0x4352C0, void, decltype(this), int8_t, bool>::run(this, state, value);
-#endif
+		runMethod<0x4352C0, void>(state, value);
 	}
 
 	int8_t getVisualPosture() const {
@@ -81,18 +77,10 @@ public:
 	}
 
 	void setVisualPosture(int8_t posture) {
-#ifdef USEJUMPTOCLIENTHACK
-		JUMPTOCLIENT(0x4328D0);
-#else
-		ThisCall<0x4328D0, void, decltype(this), int8_t>::run(this, posture);
-#endif
+		runMethod<0x4328D0, void>(posture);
 	}
 
 	void requestServerPostureChange(int8_t posture) {
-#ifdef USEJUMPTOCLIENTHACK
-		JUMPTOCLIENT(0x432860);
-#else
-		ThisCall<0x432860, void, decltype(this), int8_t>::run(this, posture);
-#endif
+		runMethod<0x432860, void>(posture);
 	}
 };
