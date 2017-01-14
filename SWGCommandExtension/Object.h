@@ -55,24 +55,6 @@ public:
 	}
 };
 
-template<typename ThisType, typename C, typename ReturnType, typename ... Args>
-struct HookThisOld {
-	static C newMethod;
-
-	static ReturnType __fastcall fastHook(ThisType thisPointer, void*, Args... args) {
-		ThisType object = (ThisType) thisPointer;
-		return (object->*(HookThisOld<ThisType, C, ReturnType, Args...>::newMethod))(args...);
-	}
-
-	typedef decltype(&fastHook) original_t;
-
-	static original_t original;
-
-	static ReturnType runOriginal(ThisType thisPointer, Args... args) {
-		return original(thisPointer, 0, args...);
-	}
-};
-
 template<std::size_t Address, class newMethod_t, class original_t> 
 class HookStorage {
 public:
@@ -152,6 +134,11 @@ public:
 	template<uint32_t VirtualOffset, typename Return, typename ... ArgumentTypes>
 	Return runVirtual(ArgumentTypes ... args) {
 		return ThisCall<VirtualOffset, Return, Object*, ArgumentTypes...>::runVirtual(this, args...);
+	}
+
+	template<uint32_t VirtualOffset, typename Return, typename ... ArgumentTypes>
+	Return runVirtual(ArgumentTypes ... args) const {
+		return ThisCall<VirtualOffset, Return, decltype(this), ArgumentTypes...>::runVirtual(this, args...);
 	}
 
 	NetworkId& getObjectID() {

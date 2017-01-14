@@ -9,5 +9,5 @@ class SwgCuiLoginScreen : public Object {
 public:
 	void onButtonPressed(Object* uicontext);
 	
-	DEFINE_HOOOK_THISCALL(LOGINSCREEN_BUTTON_PRESSED, onButtonPressed, onButtonPressedOriginal);
+	DEFINE_HOOOK(LOGINSCREEN_BUTTON_PRESSED, onButtonPressed, onButtonPressedOriginal);
 };

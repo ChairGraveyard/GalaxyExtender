@@ -268,11 +268,13 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					int checkVal = playOID == ghost->getObjectID();
 					auto lookAtTarget = creature->getLookAtTarget();
 					auto& targetOID = lookAtTarget.getObjectID();
+					constexpr uint32_t tryConstantTestValue = soe::string::hashCode("bla");
 
 					char message[1024];
-					sprintf_s(message, sizeof(message), "Your current health is: %d %s %s %s %d %d %lld %lld %d target: %lld %d %d %d %f",
+					sprintf_s(message, sizeof(message), "Your current health is: %d %s %s %s %d %d %lld %lld %d target: %lld %d %d %d %f %d",
 						healthValue, strval.c_str(), str2val.c_str(), testingVector.at(0).c_str(), val1, val2, creoOID.get(), playOID,
-						checkVal, targetOID.get(), atts.size(), mdasize, foundTestInVector, ClientProceduralTerrainAppearance::getStaticNonCollidableFloraDistance());
+						checkVal, targetOID.get(), atts.size(), mdasize, foundTestInVector, 
+						ClientProceduralTerrainAppearance::getStaticNonCollidableFloraDistance(), tryConstantTestValue);
 
 					Game::debugPrintUi(message);
 				} else
