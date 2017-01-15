@@ -10,6 +10,7 @@
 #include "Game.h"
 #include "TerrainObject.h"
 #include "SwgCuiLoginScreen.h"
+#include "SwgCuiCommandParserDefault.h"
 
 using namespace std;
 
@@ -60,6 +61,9 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 		ATTACH_HOOK(CuiChatParser::parse);
 		ATTACH_HOOK(TerrainObject::setHighLevelOfDetailThresholdHook);
 		ATTACH_HOOK(TerrainObject::setLevelOfDetailThresholdHook);
+		ATTACH_HOOK(GroundScene::parseMessages);
+		//ATTACH_HOOK(SwgCuiCommandParserDefault::ctorHook);
+		//ATTACH_HOOK(SwgCuiCommandParserDefault::removeAliasStatic);
 
 		LONG errorCode = DetourTransactionCommit();
 

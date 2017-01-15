@@ -23,7 +23,7 @@
 #define DEFINE_CLIENT_STATIC(x, y) static x ## & y;
 #define SET_CLIENT_STATIC(x, y) decltype(x) x = *reinterpret_cast<std::add_pointer<std::remove_reference<decltype(x)>::type>::type>(y);
 
-#define DEFINE_HOOOK(ADDRESS, METHOD, ORIGINAL) typedef Hook<ADDRESS, decltype(&METHOD)> ORIGINAL; \
+#define DEFINE_HOOK(ADDRESS, METHOD, ORIGINAL) typedef Hook<ADDRESS, decltype(&METHOD)> ORIGINAL; \
 	typedef Hook<ADDRESS, decltype(&METHOD)> METHOD##_hook_t;
 
 #define GENERATE_HOOK_TYPE_OLD(x) decltype(&x)
@@ -713,6 +713,9 @@ namespace soe {
 
 		unicode& operator=(const unicode& s);
 		unicode operator+ (const unicode& rhs) const;
+
+		unicode& operator+=(const unicode& rhs);
+		unicode& operator+=(const wchar_t*);
 	};
 
 	bool operator==(const char* s, const soe::unicode& s2);

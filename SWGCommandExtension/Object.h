@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <tuple>
 #include "NetworkId.h"
+#include "Transform.h"
 
 #ifdef NDEBUG
 /*	
@@ -21,6 +22,8 @@
 #define PTR_TO_OBJECT_TYPEINFO 0x01868A84
 
 class CreatureObject;
+class Controller;
+class CellProperty;
 
 /*
  *
@@ -107,10 +110,8 @@ struct Hook<Address, R(*)(Args...)> {
 	}
 };
 
-class Object {
+class BaseHookedObject {
 public:
-	constexpr static uint32_t RTTI = PTR_TO_OBJECT_TYPEINFO;
-
 	template<typename T>
 	const T& getMemoryReference(int offset) const {
 		return *reinterpret_cast<T*>(reinterpret_cast<uint32_t>(this) + offset);
@@ -123,7 +124,7 @@ public:
 
 	template<int FunctionAddress, typename Return, typename ... ArgumentTypes>
 	Return runMethod(ArgumentTypes ... args) {
-		return ThisCall<FunctionAddress, Return, Object*, ArgumentTypes...>::run(this, args...);
+		return ThisCall<FunctionAddress, Return, decltype(this), ArgumentTypes...>::run(this, args...);
 	}
 
 	template<int FunctionAddress, typename Return, typename ... ArgumentTypes>
@@ -131,26 +132,20 @@ public:
 		return ThisCall<FunctionAddress, Return, decltype(this), ArgumentTypes...>::run(this, args...);
 	}
 
+	template<int FunctionAddress, typename Return, typename ... ArgumentTypes>
+	static Return runStatic(ArgumentTypes ... args) {
+		return Call<FunctionAddress, Return, ArgumentTypes...>::run(args...);
+	}
+
 	template<uint32_t VirtualOffset, typename Return, typename ... ArgumentTypes>
 	Return runVirtual(ArgumentTypes ... args) {
-		return ThisCall<VirtualOffset, Return, Object*, ArgumentTypes...>::runVirtual(this, args...);
+		return ThisCall<VirtualOffset, Return, decltype(this), ArgumentTypes...>::runVirtual(this, args...);
 	}
 
 	template<uint32_t VirtualOffset, typename Return, typename ... ArgumentTypes>
 	Return runVirtual(ArgumentTypes ... args) const {
 		return ThisCall<VirtualOffset, Return, decltype(this), ArgumentTypes...>::runVirtual(this, args...);
 	}
-
-	NetworkId& getObjectID() {
-		return getMemoryReference<NetworkId>(0x20);
-	}
-
-	const NetworkId& getObjectID() const {
-		return getMemoryReference<const NetworkId>(0x20);
-	}
-
-	bool isCreatureObject();
-	CreatureObject* asCreatureObject();
 
 	typedef PVOID(__cdecl* dyn_cast_t)(
 		PVOID inptr,
@@ -162,4 +157,73 @@ public:
 
 	static dyn_cast_t soe_rt_dynamic_cast_func;
 	static PVOID dynamicCast(PVOID inptr, const PVOID SrcType, const PVOID TargetType);
+};
+
+class Object : public BaseHookedObject {
+public:
+	constexpr static uint32_t RTTI = PTR_TO_OBJECT_TYPEINFO;
+
+	NetworkId& getObjectID() {
+		return getMemoryReference<NetworkId>(0x20);
+	}
+
+	const NetworkId& getObjectID() const {
+		return getMemoryReference<const NetworkId>(0x20);
+	}
+
+	Controller* getController() {
+		return getMemoryReference<Controller*>(0x2C);
+	}
+
+	const Transform& getTransform_o2p() const {
+		return getMemoryReference<Transform>(0x50);
+	}
+
+	Transform& getTransform_o2p() {
+		return getMemoryReference<Transform>(0x50);
+	}
+
+	Vector getPosition_p() const {
+		return getTransform_o2p().getPosition_p();
+	}
+
+	void positionAndRotationChanged(bool val, const Vector& oldPosition) {
+		runVirtual<0x58, void, bool, const Vector&>(val, oldPosition);
+	}
+
+	void setTransform_o2p(const Transform& newObjectToParentTransform) {
+		auto oldPosition = getPosition_p();
+
+		getTransform_o2p() = newObjectToParentTransform;
+
+		positionAndRotationChanged(false, oldPosition);
+	}
+
+	void setPosition_p(const Vector& position) {
+		auto oldPosition = getPosition_p();
+
+		getTransform_o2p().setPosition_p(position);
+
+		positionAndRotationChanged(false, oldPosition);
+	}
+
+	Object* getAttachedTo() {
+		return getMemoryReference<Object*>(0x34);
+	}
+
+	void setParentCell(CellProperty* cell) {
+		runVirtual<0x34, void>(cell);
+	}
+
+	CellProperty* getCellProperty() {
+		return runMethod<0x00B24540, CellProperty*>();
+	}
+
+	void removeFromWorld() {
+		runVirtual<0xC, void>();
+	}
+
+	bool isCreatureObject();
+	CreatureObject* asCreatureObject();
+
 };

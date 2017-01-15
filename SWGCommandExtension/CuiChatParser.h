@@ -9,9 +9,9 @@
 // have gotten a chance to be processed before us.
 #define COMMAND_HANDLER_ADDRESS 0x9FF6F0
 
-class CuiChatParser {
+class CuiChatParser : public BaseHookedObject {
 public:
 	static bool parse(const soe::unicode& command, soe::unicode& result, uint32_t chatRoomID, bool useChatRoom);
 
-	DEFINE_HOOOK(COMMAND_HANDLER_ADDRESS, parse, originalParse);
+	DEFINE_HOOK(COMMAND_HANDLER_ADDRESS, parse, originalParse);
 };

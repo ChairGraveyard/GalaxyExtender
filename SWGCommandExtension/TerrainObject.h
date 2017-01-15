@@ -11,7 +11,14 @@
 class TerrainObject : public Object {
 	static float newHighLoDValue;
 	static float newLoDThresholdValue;
+
+	DEFINE_CLIENT_STATIC(TerrainObject*, ms_instance);
+
 public:
+	static TerrainObject* getInstance() {
+		return ms_instance;
+	}
+
 	static void setHighLevelOfDetailThreshold(float newValue) {
 		newHighLoDValue = newValue;
 
@@ -27,8 +34,20 @@ public:
 	static void setHighLevelOfDetailThresholdHook(float levelOfDetail);
 	static void setLevelOfDetailThresholdHook(float levelOfDetail);
 
-	DEFINE_HOOOK(HIGHLODADDRESS, setHighLevelOfDetailThresholdHook, oldSetHighLoDThreshold);
-	DEFINE_HOOOK(SETLODADDRESS, setLevelOfDetailThresholdHook, oldSetLoDThreshold);
+	DEFINE_HOOK(HIGHLODADDRESS, setHighLevelOfDetailThresholdHook, oldSetHighLoDThreshold);
+	DEFINE_HOOK(SETLODADDRESS, setLevelOfDetailThresholdHook, oldSetLoDThreshold);
+
+	bool isWithinTerrainBoundaries(const Vector& position) const {
+		return runMethod<0x00B5CD90, bool>(position);
+	}
+
+	float getMapWidthInMeters() const {
+		return runMethod<0x00B5C3C0, float>();
+	}
+
+	float getMaximumValidHeightInMeters() const {
+		return runMethod<0x00B5C3D0, float>();
+	}
 
 	static float getHighLevelOfDetailThreshold() {
 		return Call<GETHIGHLOADADDRESS, float>::run();

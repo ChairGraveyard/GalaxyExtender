@@ -165,30 +165,43 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AutoDeltaVariable.h" />
     <ClInclude Include="CachedNetworkId.h" />
+    <ClInclude Include="CellProperty.h" />
     <ClInclude Include="ClientCommandQueue.h" />
     <ClInclude Include="ClientObject.h" />
     <ClInclude Include="ClientProceduralTerrainAppearance.h" />
+    <ClInclude Include="CollisionWorld.h" />
     <ClInclude Include="ConfigClientTerrain.h" />
+    <ClInclude Include="Controller.h" />
     <ClInclude Include="CreatureObject.h" />
     <ClInclude Include="CuiChatParser.h" />
     <ClInclude Include="CuiMediatorFactory.h" />
     <ClInclude Include="FreeChaseCamera.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GameLanguageManager.h" />
+    <ClInclude Include="Graphics.h" />
     <ClInclude Include="GroundScene.h" />
+    <ClInclude Include="InputMap.h" />
     <ClInclude Include="IntangibleObject.h" />
+    <ClInclude Include="MessageQueue.h" />
     <ClInclude Include="NetworkId.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="PlayerObject.h" />
+    <ClInclude Include="RemoteCreatureController.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="soewrappers.h" />
+    <ClInclude Include="SwgCuiChatWindow.h" />
+    <ClInclude Include="SwgCuiCommandParserDefault.h" />
     <ClInclude Include="SwgCuiLoginScreen.h" />
     <ClInclude Include="TangibleObject.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TerrainObject.h" />
+    <ClInclude Include="Transform.h" />
+    <ClInclude Include="Vector.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CellProperty.cpp" />
     <ClCompile Include="ClientProceduralTerrainAppearance.cpp" />
     <ClCompile Include="CuiChatParser.cpp" />
     <ClCompile Include="dllmain.cpp">
@@ -206,6 +219,7 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="GroundScene.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

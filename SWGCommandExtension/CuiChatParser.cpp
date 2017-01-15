@@ -14,6 +14,9 @@
 #include "GameLanguageManager.h"
 #include "FreeChaseCamera.h"
 #include "TerrainObject.h"
+#include "Controller.h"
+#include "CellProperty.h"
+#include "CollisionWorld.h"
 
 //extern float terrainDistanceOverrideValue;
 //extern float globalDetailOverrideValue;
@@ -59,7 +62,23 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 			auto &command = args[0];
 
 			// Handle global detail command.
-			if (command == L"globaldetail") {
+			if (command == L"mctrl") {
+				CreatureObject* creature = Game::getPlayerCreature();
+				auto controller = creature->getController();
+
+				float msg = stof(args[1]);
+				float value = args.size() > 2 ? stof(args[2]) : 0;
+
+				if (controller) {
+					controller->appendMessage(static_cast<int>(msg), value, 0);
+				} else {
+					resultUnicode += L"null controller";
+
+					return true;
+				}
+
+				handled = true;
+			} else if (command == L"globaldetail") {
 				float newVal = stof(args[1]);
 				float oldVal = TerrainObject::getLevelOfDetailThreshold();
 
@@ -187,7 +206,14 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 		} else if (afterSlash.size() > 0) {
 			auto &command = afterSlash;
 
-			if (command == L"assist2") {
+			if (command == L"reloadTerrain") {
+				if (groundScene)
+					groundScene->reloadTerrain();
+				else
+					resultUnicode = "groundScene is null";
+
+				return true;
+			} else if (command == L"assist2") {
 				CreatureObject* creature = Game::getPlayerCreature();
 				auto& lookAtTarget = creature->getLookAtTarget();
 				Object* obj = lookAtTarget.getObject();
@@ -206,25 +232,14 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				}
 
 				handled = 1;
-			} if (command == L"testhooks") {
-				Object* console = CuiMediatorFactory::get("DebugInfoPage");
-
-				if (console != nullptr) {
-					Game::debugPrintUi("activating console");
-
-					CuiMediatorFactory::activate("DebugInfoPage");
-				} else {
-					Game::debugPrintUi("could not find console in cui mediator");
-				}
-
-				//ClientCommandQueue::enqueueCommand(soe::string::hashCode("target"));
-
+			} if (command == L"testhooks") {				
 				CreatureObject* creature = Game::getPlayerCreature();
 				PlayerObject* playerObject = Game::getPlayerObject();
 				soe::string strval = "testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing";
 				soe::unicode unicodeTest = "testingUnicode";
 				int mdasize = strval.size();
 				int foundTestInVector = 0;
+				auto position = creature->getPosition_p();
 
 				soe::vector<soe::string> testingVector = { "asdagdsg", "balsda", "asdjasd", "asoidhaoisf" };
 				testingVector.emplace_back("mdaaa");
@@ -271,10 +286,10 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					constexpr uint32_t tryConstantTestValue = soe::string::hashCode("bla");
 
 					char message[1024];
-					sprintf_s(message, sizeof(message), "Your current health is: %d %s %s %s %d %d %lld %lld %d target: %lld %d %d %d %f %d",
+					sprintf_s(message, sizeof(message), "Your current health is: %d %s %s %s %d %d %lld %lld %d target: %lld %d %d %d %f %d\n position: %f %f %f",
 						healthValue, strval.c_str(), str2val.c_str(), testingVector.at(0).c_str(), val1, val2, creoOID.get(), playOID,
 						checkVal, targetOID.get(), atts.size(), mdasize, foundTestInVector, 
-						ClientProceduralTerrainAppearance::getStaticNonCollidableFloraDistance(), tryConstantTestValue);
+						ClientProceduralTerrainAppearance::getStaticNonCollidableFloraDistance(), tryConstantTestValue, position.getX(), position.getY(), position.getZ());
 
 					Game::debugPrintUi(message);
 				} else

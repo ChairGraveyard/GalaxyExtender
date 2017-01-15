@@ -5,9 +5,9 @@
 
 #define LOGINSCREEN_BUTTON_PRESSED 0xC8D460
 
-class SwgCuiLoginScreen : public Object {
+class SwgCuiLoginScreen : public BaseHookedObject {
 public:
 	void onButtonPressed(Object* uicontext);
 	
-	DEFINE_HOOOK(LOGINSCREEN_BUTTON_PRESSED, onButtonPressed, onButtonPressedOriginal);
+	DEFINE_HOOK(LOGINSCREEN_BUTTON_PRESSED, onButtonPressed, onButtonPressedOriginal);
 };

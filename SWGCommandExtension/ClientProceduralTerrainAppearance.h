@@ -1,8 +1,9 @@
 #pragma once
 
 #include "soewrappers.h"
+#include "Object.h"
 
-class ClientProceduralTerrainAppearance {
+class ClientProceduralTerrainAppearance : public BaseHookedObject {
 	class LevelOfDetail {
 	public:
 		

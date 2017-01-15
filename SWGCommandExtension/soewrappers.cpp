@@ -269,3 +269,34 @@ soe::unicode soe::unicode::operator+(const soe::unicode & rhs) const {
 
 	return newstring;
 }
+
+soe::unicode& soe::unicode::operator+=(const unicode& rhs) {
+	if (this == &rhs)
+		return *this;
+
+	auto leftSize = size();
+	auto rightSize = rhs.size();
+
+	ensureCapacity(leftSize + rightSize + 1);
+
+	memcpy(start + leftSize, rhs.start, rightSize * sizeof(wchar_t));
+
+	finish = start + leftSize + rightSize;
+	*(finish) = 0;
+
+	return *this;
+}
+
+soe::unicode& soe::unicode::operator+=(const wchar_t* rhs) {
+	auto leftSize = size();
+	auto rightSize = wcslen(rhs);
+
+	ensureCapacity(leftSize + rightSize + 1);
+
+	memcpy(start + leftSize, rhs, rightSize * sizeof(wchar_t));
+
+	finish = start + leftSize + rightSize;
+	*(finish) = 0;
+
+	return *this;
+}

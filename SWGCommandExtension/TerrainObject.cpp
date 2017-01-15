@@ -5,6 +5,8 @@
 float TerrainObject::newHighLoDValue = getHighLevelOfDetailThreshold();
 float TerrainObject::newLoDThresholdValue = getLevelOfDetailThreshold();
 
+SET_CLIENT_STATIC(TerrainObject::ms_instance, 0x01947194);
+
 void TerrainObject::setHighLevelOfDetailThresholdHook(float ) {
 	oldSetHighLoDThreshold::run(newHighLoDValue);
 }
