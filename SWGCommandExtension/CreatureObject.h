@@ -84,4 +84,8 @@ public:
 	void requestServerPostureChange(int8_t posture) {
 		runMethod<0x432860, void>(posture);
 	}
+
+	//------------
+
+	//-----------
 };

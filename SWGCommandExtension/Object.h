@@ -157,6 +157,24 @@ public:
 
 	static dyn_cast_t soe_rt_dynamic_cast_func;
 	static PVOID dynamicCast(PVOID inptr, const PVOID SrcType, const PVOID TargetType);
+
+	/*template<class T, class ...Args>
+	static T* create_object(Args... args) {
+		T* address = soe::allocator<T>::allocate(sizeof(T));
+
+		new (&(*address)) T(std::forward<Args>(args)...);
+
+		return address;
+	}*/
+
+	template<class T, class ...Args>
+	static T* create_hooked_object(Args... args) {
+		T* address = soe::allocator<T>::allocate(sizeof(T));
+
+		address->ctor(std::forward<Args>(args)...);
+
+		return address;
+	}
 };
 
 class Object : public BaseHookedObject {
@@ -175,6 +193,10 @@ public:
 		return getMemoryReference<Controller*>(0x2C);
 	}
 
+	soe::vector<Object*>* getAttachedObjects() {
+		return getMemoryReference<soe::vector<Object*>*>(0x38);
+	}
+
 	const Transform& getTransform_o2p() const {
 		return getMemoryReference<Transform>(0x50);
 	}
@@ -191,21 +213,8 @@ public:
 		runVirtual<0x58, void, bool, const Vector&>(val, oldPosition);
 	}
 
-	void setTransform_o2p(const Transform& newObjectToParentTransform) {
-		auto oldPosition = getPosition_p();
-
-		getTransform_o2p() = newObjectToParentTransform;
-
-		positionAndRotationChanged(false, oldPosition);
-	}
-
-	void setPosition_p(const Vector& position) {
-		auto oldPosition = getPosition_p();
-
-		getTransform_o2p().setPosition_p(position);
-
-		positionAndRotationChanged(false, oldPosition);
-	}
+	void setTransform_o2p(const Transform& newObjectToParentTransform);
+	void setPosition_p(const Vector& position);
 
 	Object* getAttachedTo() {
 		return getMemoryReference<Object*>(0x34);
@@ -224,6 +233,87 @@ public:
 	}
 
 	bool isCreatureObject();
+
 	CreatureObject* asCreatureObject();
 
+	bool isChildObject() {
+		return runMethod<0x00B22310, bool>();
+	}
+
+	bool getKill() {
+		return runMethod<0x00B22320, bool>();
+	}
+
+	soe::string getDebugInformation(bool parent = true) const {
+		soe::string info;
+		
+		runMethod<0x00B223B0, void , soe::string&, bool>(info, parent);
+
+		return info;
+	}
+
+	void addToWorld() {
+		runMethod<0x00B225F0, void>();
+	}
+
+	bool isInWorldCell() const {
+		return runMethod<0x00B22BE0, bool>();
+	}
+
+	const Transform& getTransform_o2w() const {
+		return runMethod<0x00B22C80, const Transform&>();
+	}
+
+	void setTransform_o2w(const Transform& trans) {
+		runMethod<0x00B22CC0, void, const Transform&>(trans);
+	}
+
+	void setTransform_a2w(const Transform& trans) const {
+		runMethod<0x0B22E1, void, const Transform&>(trans);
+	}
+
+	const Transform& getTransform_a2w() const {
+		return runMethod<0x00B22E90, const Transform&>();
+	}
+
+	Transform getTransform_o2c() const {
+		Transform tr;
+
+		runMethod<0x00B22F00, void, Transform&>(tr);
+
+		return tr;
+	}
+
+	void setAppearance(Object* appearance) {
+		runMethod<0x00B22F60, void>(appearance);
+	}
+
+	Object* stealAppearance() {
+		return runMethod<0x00B22FF0, Object*>();
+	}
+
+	const Vector& getAppearanceSphereCenter() const {
+		return runMethod<0x00B23020, const Vector&>();
+	}
+
+	int getNumberOfAttachedObjects() const {
+		return runMethod<0x00B232E0, int>();
+	}
+
+	Object* getAttachedObject(int idx) {
+		return runMethod<0x00B23300, Object*>(idx);
+	}
+
+	Object* getChildObject(int idx) {
+		return runMethod<0x00B23360, Object*>(idx);
+	}
+
+	//virtual method at 0x38?
+	void detachFromObject(int flags) {
+		runMethod<0x00B23670, void>(flags);
+	}
+
+	const char* getObjectTemplateName() const {
+		return runMethod<0x00B23C40, const char*>();
+	}
 };

@@ -11,6 +11,7 @@
 #include "TerrainObject.h"
 #include "SwgCuiLoginScreen.h"
 #include "SwgCuiCommandParserDefault.h"
+#include "SwgCuiMediatorFactorySetup.h"
 
 using namespace std;
 
@@ -46,6 +47,9 @@ void writeBytes(BYTE* address, const BYTE* values, int size) {
 #define ATTACH_HOOK(METHOD) METHOD##_hook_t::hookStorage_t::newMethod = &METHOD; \
 											DetourAttach((PVOID*) &METHOD##_hook_t::hookStorage_t::original, (PVOID) METHOD##_hook_t::callHook);
 
+#define DETACH_HOOK(METHOD) DetourDetach((PVOID*) &METHOD##_hook_t::hookStorage_t::original, (PVOID) METHOD##_hook_t::callHook);
+	
+
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 {
 	switch (dwReason)
@@ -64,6 +68,7 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 		ATTACH_HOOK(GroundScene::parseMessages);
 		//ATTACH_HOOK(SwgCuiCommandParserDefault::ctorHook);
 		//ATTACH_HOOK(SwgCuiCommandParserDefault::removeAliasStatic);
+		ATTACH_HOOK(SwgCuiMediatorFactorySetup::install);
 
 		LONG errorCode = DetourTransactionCommit();
 
@@ -86,6 +91,12 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 	case DLL_PROCESS_DETACH:
 		DetourTransactionBegin();
 		DetourUpdateThread(GetCurrentThread());
+
+		DETACH_HOOK(SwgCuiLoginScreen::onButtonPressed);
+		DETACH_HOOK(CuiChatParser::parse);
+		DETACH_HOOK(TerrainObject::setHighLevelOfDetailThresholdHook);
+		DETACH_HOOK(TerrainObject::setLevelOfDetailThresholdHook);
+		DETACH_HOOK(GroundScene::parseMessages);
 
 		DetourTransactionCommit();
 		break;

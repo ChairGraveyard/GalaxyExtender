@@ -5,7 +5,6 @@
 
 template<typename T>
 class AutoDeltaVariable : public BaseHookedObject {
-
 public:
 	const T& getCurrent() const {
 		return getMemoryReference<T>(0xC);
@@ -15,7 +14,7 @@ public:
 		return getMemoryReference<T>(0x10);
 	}
 
-	void setValue(const T& val) {
+	void set(const T& val) {
 		if (getCurrent() != val) {
 			runVirtual<0x1C, void, const T&>(val);
 		}

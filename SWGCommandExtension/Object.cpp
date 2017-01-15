@@ -19,3 +19,19 @@ bool Object::isCreatureObject() {
 CreatureObject* Object::asCreatureObject() {
 	return reinterpret_cast<CreatureObject*>(dynamicCast(this, (PVOID) Object::RTTI, (PVOID) CreatureObject::RTTI));
 }
+
+void Object::setTransform_o2p(const Transform& newObjectToParentTransform) {
+	auto oldPosition = getPosition_p();
+
+	getTransform_o2p() = newObjectToParentTransform;
+
+	positionAndRotationChanged(false, oldPosition);
+}
+
+void Object::setPosition_p(const Vector& position) {
+	auto oldPosition = getPosition_p();
+
+	getTransform_o2p().setPosition_p(position);
+
+	positionAndRotationChanged(false, oldPosition);
+}

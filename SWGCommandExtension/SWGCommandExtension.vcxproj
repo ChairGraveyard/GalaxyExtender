@@ -172,10 +172,16 @@
     <ClInclude Include="ClientObject.h" />
     <ClInclude Include="ClientProceduralTerrainAppearance.h" />
     <ClInclude Include="CollisionWorld.h" />
+    <ClInclude Include="CommandParser.h" />
+    <ClInclude Include="CommandParserHistory.h" />
     <ClInclude Include="ConfigClientTerrain.h" />
     <ClInclude Include="Controller.h" />
     <ClInclude Include="CreatureObject.h" />
     <ClInclude Include="CuiChatParser.h" />
+    <ClInclude Include="CuiChatParserStrategy.h" />
+    <ClInclude Include="CuiConsoleHelper.h" />
+    <ClInclude Include="CuiConsoleHelperParserStrategy.h" />
+    <ClInclude Include="CuiMediator.h" />
     <ClInclude Include="CuiMediatorFactory.h" />
     <ClInclude Include="FreeChaseCamera.h" />
     <ClInclude Include="Game.h" />
@@ -185,19 +191,30 @@
     <ClInclude Include="InputMap.h" />
     <ClInclude Include="IntangibleObject.h" />
     <ClInclude Include="MessageQueue.h" />
+    <ClInclude Include="Misc.h" />
     <ClInclude Include="NetworkId.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="ObjectAttributeManager.h" />
     <ClInclude Include="PlayerObject.h" />
     <ClInclude Include="RemoteCreatureController.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="soewrappers.h" />
     <ClInclude Include="SwgCuiChatWindow.h" />
     <ClInclude Include="SwgCuiCommandParserDefault.h" />
+    <ClInclude Include="SwgCuiConsole.h" />
     <ClInclude Include="SwgCuiLoginScreen.h" />
+    <ClInclude Include="SwgCuiMediatorFactorySetup.h" />
     <ClInclude Include="TangibleObject.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TerrainObject.h" />
     <ClInclude Include="Transform.h" />
+    <ClInclude Include="UIBaseObject.h" />
+    <ClInclude Include="UIEventCallback.h" />
+    <ClInclude Include="UIManager.h" />
+    <ClInclude Include="UIPage.h" />
+    <ClInclude Include="UIText.h" />
+    <ClInclude Include="UITextbox.h" />
+    <ClInclude Include="UIWidget.h" />
     <ClInclude Include="Vector.h" />
   </ItemGroup>
   <ItemGroup>
@@ -229,7 +246,9 @@
     </ClCompile>
     <ClCompile Include="soewrappers.cpp" />
     <ClCompile Include="SWGCommandExtension.cpp" />
+    <ClCompile Include="SwgCuiConsole.cpp" />
     <ClCompile Include="SwgCuiLoginScreen.cpp" />
+    <ClCompile Include="SwgCuiMediatorFactorySetup.cpp" />
     <ClCompile Include="TerrainObject.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

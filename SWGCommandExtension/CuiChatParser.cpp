@@ -17,6 +17,8 @@
 #include "Controller.h"
 #include "CellProperty.h"
 #include "CollisionWorld.h"
+#include "ObjectAttributeManager.h"
+#include "SwgCuiConsole.h"
 
 //extern float terrainDistanceOverrideValue;
 //extern float globalDetailOverrideValue;
@@ -62,7 +64,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 			auto &command = args[0];
 
 			// Handle global detail command.
-			if (command == L"mctrl") {
+			if (command == L"octrl") {
 				CreatureObject* creature = Game::getPlayerCreature();
 				auto controller = creature->getController();
 
@@ -88,8 +90,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 
 				std::string values = "oldVal:" + std::to_string(oldVal) + " newValAfterSetting: " + std::to_string(newValAfterSetting);
 
-				// Tell the user to slide the slider to make the override take effect.				
-				Game::debugPrintUi(values.c_str());
+				resultUnicode += values.c_str();
 
 				handled = true;
 			} else if (command == L"highdetailterrain" || command == L"hdterrain") {
@@ -103,22 +104,21 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 
 				std::string values = "oldVal:" + std::to_string(oldVal) + " newValAfterSetting: " + std::to_string(newValAfterSetting);
 
-				// Tell the user to slide the slider to make the override take effect.												
-				Game::debugPrintUi(values.c_str());
+				resultUnicode += values.c_str();
 
 				handled = true;
 			} else if (command == L"radialflora") {
 				float newVal = stof(args[1]);
 				ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(newVal);
 
-				Game::debugPrintUi("Radial Flora distance set.");
+				resultUnicode += L"Radial Flora distance set.";
 
 				handled = true;
 			} else if (command == L"noncollidableflora" || command == L"ncflora") {
 				float newVal = stof(args[1]);
 				ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(newVal);
 
-				Game::debugPrintUi("Non-Collidable Flora distance set.");
+				resultUnicode += L"Non-Collidable Flora distance set.";
 
 				handled = true;
 			} else if (command == L"viewdistance" || command == L"vd") {
@@ -127,7 +127,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 
 					camera->setViewDistance(newVal);
 
-					Game::debugPrintUi("View distance distance set.");
+					resultUnicode += L"View distance distance set.";
 				}
 
 				handled = true;
@@ -135,14 +135,14 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				auto& setting = args[1];
 				if (setting == L"help")
 				{
-					Game::debugPrintUi("This command sets the overrides for all settings at once.");
-					Game::debugPrintUi("Default - View Distance: 1024, Global Detail: 6, High Detail Terrain: 10, Radial Flora: 64, Non-Collidable Flora: 32");
-					Game::debugPrintUi("Low - View Distance: 1536, Global Detail: 8, High Detail Terrain: 12, Radial Flora: 80, Non-Collidable Flora: 50");
-					Game::debugPrintUi("Medium - View Distance: 2048, Global Detail: 9, High Detail Terrain: 15, Radial Flora: 100, Non-Collidable Flora: 55");
-					Game::debugPrintUi("High - View Distance: 4096, Global Detail: 12, High Detail Terrain: 30, Radial Flora: 128, Non-Collidable Flora: 64");
-					Game::debugPrintUi("Ultra - View Distance: 4096, Global Detail: 16, High Detail Terrain: 50, Radial Flora: 256, Non-Collidable Flora: 128");
+					resultUnicode += L"This command sets the overrides for all settings at once.\n";
+					resultUnicode += L"Default - View Distance: 1024, Global Detail: 6, High Detail Terrain: 10, Radial Flora: 64, Non-Collidable Flora: 32\n";
+					resultUnicode += L"Low - View Distance: 1536, Global Detail: 8, High Detail Terrain: 12, Radial Flora: 80, Non-Collidable Flora: 50\n";
+					resultUnicode += L"Medium - View Distance: 2048, Global Detail: 9, High Detail Terrain: 15, Radial Flora: 100, Non-Collidable Flora: 55\n";
+					resultUnicode += L"High - View Distance: 4096, Global Detail: 12, High Detail Terrain: 30, Radial Flora: 128, Non-Collidable Flora: 64\n";
+					resultUnicode += L"Ultra - View Distance: 4096, Global Detail: 16, High Detail Terrain: 50, Radial Flora: 256, Non-Collidable Flora: 128\n";
 				} else if (setting == L"default") {
-					Game::debugPrintUi("Default - View Distance: 1024, Global Detail: 6, High Detail Terrain: 10, Radial Flora: 64, Non-Collidable Flora: 32");
+					resultUnicode +=  L"Default - View Distance: 1024, Global Detail: 6, High Detail Terrain: 10, Radial Flora: 64, Non-Collidable Flora: 32\n";
 
 					if (camera)
 						camera->setViewDistance(1024);
@@ -153,7 +153,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(64);
 					ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(32);
 				} else if (setting == L"low") {
-					Game::debugPrintUi("Low - View Distance: 1536, Global Detail: 8, High Detail Terrain: 12, Radial Flora: 80, Non-Collidable Flora: 50");
+					resultUnicode += "Low - View Distance: 1536, Global Detail: 8, High Detail Terrain: 12, Radial Flora: 80, Non-Collidable Flora: 50";
 
 					if (camera)
 						camera->setViewDistance(1536);
@@ -164,7 +164,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(80);
 					ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(50);
 				} else if (setting == L"medium" || setting == L"med") {
-					Game::debugPrintUi("Medium - View Distance: 2048, Global Detail: 9, High Detail Terrain: 15, Radial Flora: 100, Non-Collidable Flora: 55");
+					resultUnicode += L"Medium - View Distance: 2048, Global Detail: 9, High Detail Terrain: 15, Radial Flora: 100, Non-Collidable Flora: 55";
 
 					if (camera)
 						camera->setViewDistance(2048);
@@ -175,7 +175,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(100);
 					ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(55);
 				} else if (setting == L"high") {
-					Game::debugPrintUi("High - View Distance: 4096, Global Detail: 12, High Detail Terrain: 30, Radial Flora: 128, Non-Collidable Flora: 64");
+					resultUnicode += L"High - View Distance: 4096, Global Detail: 12, High Detail Terrain: 30, Radial Flora: 128, Non-Collidable Flora: 64";
 
 					if (camera)
 						camera->setViewDistance(4096);
@@ -186,7 +186,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(128);
 					ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(64);
 				} else if (setting == L"ultra") {
-					Game::debugPrintUi("Ultra - View Distance: 4096, Global Detail: 16, High Detail Terrain: 50, Radial Flora: 256, Non-Collidable Flora: 128");
+					resultUnicode += L"Ultra - View Distance: 4096, Global Detail: 16, High Detail Terrain: 50, Radial Flora: 256, Non-Collidable Flora: 128";
 
 					if (camera)
 						camera->setViewDistance(4096);
@@ -197,7 +197,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(256);
 					ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(128);
 				} else
-					Game::debugPrintUi("No option specified. Syntax is /setall <default|low|medium|high|ultra> or /overrideall <default|low|medium|high|ultra");
+					resultUnicode += L"No option specified. Syntax is /setall <default|low|medium|high|ultra> or /overrideall <default|low|medium|high|ultra";
 
 				handled = true;
 			}
@@ -232,8 +232,42 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				}
 
 				handled = 1;
-			} if (command == L"testhooks") {				
+			} if (command == L"console") {
+				static bool installed = false;
+
+				if (!installed) {
+					typedef CuiMediatorFactory::Constructor<SwgCuiConsole> ctor_t;
+
+					auto ctor = new ctor_t(("/Console"));
+
+					CuiMediatorFactory::addConstructor("Console", ctor);
+
+					installed = true;
+
+					CuiMediator* console = CuiMediatorFactory::get("Console");
+
+					if (console != nullptr) {
+						resultUnicode += L"activating console";
+
+						CuiMediatorFactory::activate("Console");
+					} else {
+						resultUnicode += "could not find console in cui mediator factory";
+					}
+				} else {
+					CuiMediatorFactory::toggle("Console");
+				}
+
+				return true;
+			} if (command == L"testhooks") {
 				CreatureObject* creature = Game::getPlayerCreature();
+				soe::string debugInfo = creature->getDebugInformation();
+				soe::unicode attrInfo;
+				soe::string templateName = creature->getObjectTemplateName();
+
+				int checkController = creature == creature->getController()->getOwner();
+
+				ObjectAttributeManager::formatDebugInfo(creature, attrInfo);
+
 				PlayerObject* playerObject = Game::getPlayerObject();
 				soe::string strval = "testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing""testing";
 				soe::unicode unicodeTest = "testingUnicode";
@@ -271,8 +305,7 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 
 				str2val = str2val + "addition";
 
-				if (creature)
-				{
+				if (creature) {
 					const soe::vector<int> atts = creature->getAttributesArray(); //this intentionally copies the incoming vector to test
 					int healthValue = creature->getAttribute(CreatureObject::Health);
 					bool val1 = playerObject->speaksLanguage(1);
@@ -286,16 +319,20 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					constexpr uint32_t tryConstantTestValue = soe::string::hashCode("bla");
 
 					char message[1024];
-					sprintf_s(message, sizeof(message), "Your current health is: %d %s %s %s %d %d %lld %lld %d target: %lld %d %d %d %f %d\n position: %f %f %f",
+					sprintf_s(message, sizeof(message), "Your current health is: %d %s %s %s %d %d %lld %lld %d target: %lld %d %d %d %f %d\n position: %f %f %f ctrl==creo:%d ",
 						healthValue, strval.c_str(), str2val.c_str(), testingVector.at(0).c_str(), val1, val2, creoOID.get(), playOID,
 						checkVal, targetOID.get(), atts.size(), mdasize, foundTestInVector, 
-						ClientProceduralTerrainAppearance::getStaticNonCollidableFloraDistance(), tryConstantTestValue, position.getX(), position.getY(), position.getZ());
+						ClientProceduralTerrainAppearance::getStaticNonCollidableFloraDistance(), tryConstantTestValue, position.getX(), position.getY(), position.getZ(), checkController);
 
-					Game::debugPrintUi(message);
-				} else
-				{
-					Game::debugPrintUi("Main Player CreatureObject is null");
+					resultUnicode += message;
+				} else {
+					resultUnicode += L"Main Player CreatureObject is null";
 				}
+
+				resultUnicode += debugInfo.c_str();
+
+				resultUnicode += attrInfo;
+				resultUnicode += templateName.c_str();
 
 				handled = true;
 			}
@@ -309,9 +346,9 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 					sprintf_s(message, sizeof(message), "Your current health is: %d",
 						healthValue);
 
-					Game::debugPrintUi(message);
+					resultUnicode += message;
 				}  else {
-					Game::debugPrintUi("Main Player CreatureObject is null");
+					resultUnicode += L"Main Player CreatureObject is null";
 				}
 
 				handled = true;
@@ -319,39 +356,39 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 				double radialDist = ClientProceduralTerrainAppearance::getDynamicNearFloraDistance();
 				auto radialDistString = std::to_string(radialDist);
 
-				Game::debugPrintUi("Radial Flora Distance: ");
-				Game::debugPrintUi(radialDistString.c_str());
+				resultUnicode += L"Radial Flora Distance: ";
+				resultUnicode += radialDistString.c_str();
 
 				handled = true;
 			} else if (command == L"getnoncollidableflora" || command == L"getncflora") {
 				double ncDist = ClientProceduralTerrainAppearance::getStaticNonCollidableFloraDistance();
 				auto ncDistString = std::to_string(ncDist);
 
-				Game::debugPrintUi("Non-Collidable Flora Distance: ");
-				Game::debugPrintUi(ncDistString.c_str());
+				resultUnicode += L"Non-Collidable Flora Distance: ";
+				resultUnicode += ncDistString.c_str();
 
 				handled = true;
 			} else if (command == L"getviewdistance" || command == L"getvd") {
 				if (camera) {
 					auto viewDistString = std::to_string(camera->getViewDistance());
 
-					Game::debugPrintUi("View/Rendering Distance: ");
-					Game::debugPrintUi(viewDistString.c_str());
+					resultUnicode += "View/Rendering Distance: ";
+					resultUnicode += viewDistString.c_str();
 				}
 
 				handled = true;
 			} else if (command == L"exthelp") {
-				Game::debugPrintUi("[COMMAND HELP] Settings Override Extensions by N00854180T");
-				Game::debugPrintUi("/globaldetail X - sets the Global Detail Level to X, valid ranges are 1-24. You must move the slider in Terrain options AFTER using this command.");
-				Game::debugPrintUi("<hdterrain|/highdetailterrain> X - sets the High Detail Terrain Distance to X, valid ranges are 1-50. You must move the slider in Terrain options AFTER using this command.");
-				Game::debugPrintUi("/radialflora X - sets the Radial Flora Distance to X, valid ranges are 1-256.");
-				Game::debugPrintUi("</ncflora|/noncollidableflora> X - sets the Non-Collidable Flora Distance to X, valid ranges are 1-128.");
-				Game::debugPrintUi("</vd|/viewdistance> X - sets the View/Rendering Distance to X, valid ranges are 512-4096.");
-				Game::debugPrintUi("</getvd|/getviewdistance> - Prints the current View/Rendering Distance value to the chat.");
-				Game::debugPrintUi("/getradialflora - Prints the current Radial Flora Distance value to the chat.");
-				Game::debugPrintUi("</getncflora|/getnoncollidableflora> - Prints the current Non-Collidable Flora Distance value to the chat.");
-				Game::debugPrintUi("</setall|/overrideall> <default|low|medium|high|ultra> - Sets all graphics settings to preset values. Type /overrideall help for info on each preset.");
-				Game::debugPrintUi("/exthelp - This command, which lists help info on available extension commands.");
+				resultUnicode += L"[COMMAND HELP] Settings Override Extensions by N00854180T\n";
+				resultUnicode += L"/globaldetail X - sets the Global Detail Level to X, valid ranges are 1-24. You must move the slider in Terrain options AFTER using this command.\n";
+				resultUnicode += L"<hdterrain|/highdetailterrain> X - sets the High Detail Terrain Distance to X, valid ranges are 1-50. You must move the slider in Terrain options AFTER using this command.\n";
+				resultUnicode += L"/radialflora X - sets the Radial Flora Distance to X, valid ranges are 1-256.\n";
+				resultUnicode += L"</ncflora|/noncollidableflora> X - sets the Non-Collidable Flora Distance to X, valid ranges are 1-128.\n";
+				resultUnicode += L"</vd|/viewdistance> X - sets the View/Rendering Distance to X, valid ranges are 512-4096.\n";
+				resultUnicode += L"</getvd|/getviewdistance> - Prints the current View/Rendering Distance value to the chat.\n";
+				resultUnicode += L"/getradialflora - Prints the current Radial Flora Distance value to the chat.\n";
+				resultUnicode += L"</getncflora|/getnoncollidableflora> - Prints the current Non-Collidable Flora Distance value to the chat.\n";
+				resultUnicode += L"</setall|/overrideall> <default|low|medium|high|ultra> - Sets all graphics settings to preset values. Type /overrideall help for info on each preset.\n";
+				resultUnicode += L"/exthelp - This command, which lists help info on available extension commands.\n";
 
 				handled = true;
 			}

@@ -1,13 +1,17 @@
 #pragma once
 
-#include "soewrappers.h"
+#include "UIEventCallback.h"
 
-class CuiConsoleHelperParserStrategy {
+class UIPage;
+class UIText;
+class UITextbox;
+class CuiConsoleHelperParserStrategy;
+class CommandParserHistory;
+
+class CuiConsoleHelper : public UIEventCallback {
+	char data[0x38];
 public:
-	virtual bool parse(const soe::unicode& str, soe::unicode& result) const = 0;
-
-	virtual bool tabCompleteToken(const soe::unicode* str, size_t tokenPos, 
-		soe::vector<soe::unicode>& results, size_t & token_start, size_t & token_end) const = 0;
-
-	virtual ~CuiConsoleHelperParserStrategy() = 0;
+	void ctor(UIPage* containerPage, UIText* text, UITextbox* textbox, const CuiConsoleHelperParserStrategy * strategy, CommandParserHistory * history) {
+		runMethod<0x00913930, void>(containerPage, text, textbox, strategy, history);
+	}
 };
