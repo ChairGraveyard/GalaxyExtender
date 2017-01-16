@@ -53,7 +53,7 @@ public:
 		}
 
 		CuiMediator* create(UIPage& page) const {
-			return BaseHookedObject::create_hooked_object<T, UIPage&>(page);
+			return BaseHookedObject::create_soe_object<T, UIPage&>(page);
 		}
 
 		CuiMediator* createInto(UIPage& page) const;
@@ -103,5 +103,5 @@ public:
 template<typename T>
 CuiMediator* CuiMediatorFactory::Constructor<T>::createInto(UIPage& page) const {
 	UIPage* const dupe = UIPage::DuplicateInto(page, path.c_str());
-	return BaseHookedObject::create_hooked_object<T, UIPage&>(*dupe);
+	return BaseHookedObject::create_soe_object<T, UIPage&>(*dupe);
 }

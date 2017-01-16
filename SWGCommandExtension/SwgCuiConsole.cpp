@@ -28,11 +28,17 @@ void SwgCuiConsole::ctor(UIPage& page) {
 	m_inputTextbox = (UITextbox*)page.GetObjectFromPath("InputTextbox", 36);
 
 	m_history = new CommandParserHistory(); //this is gonna leak untill i hook the dtor in the vtable
-	auto parser = create_hooked_object<SwgCuiCommandParserDefault>(m_history);
-	m_parserStrategy = create_hooked_object<CuiChatParserStrategy>(parser, false);
-	m_consoleHelper = create_hooked_object<CuiConsoleHelper>(&page, m_outputText, m_inputTextbox, m_parserStrategy, m_history);
+	auto parser = create_soe_object<SwgCuiCommandParserDefault>(m_history);
+	m_parserStrategy = create_soe_object<CuiChatParserStrategy>(parser, false);
+	m_consoleHelper = create_soe_object<CuiConsoleHelper>(&page, m_outputText, m_inputTextbox, m_parserStrategy, m_history);
 
-	m_outputText->AppendLocalText("riiiiise");
+	m_consoleHelper->setEcho(true);
+
+	soe::unicode str("\\#ffffff");
+
+	m_outputText->AppendLocalText(str);
+
+	//m_outputText->AppendLocalText("riiiiise");
 }
 
 void SwgCuiConsole::performActivate() {

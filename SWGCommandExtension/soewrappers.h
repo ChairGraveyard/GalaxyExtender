@@ -491,7 +491,7 @@ namespace soe {
 			*base_t::end() = 0;
 		}
 
-		void push_back(const char& element);
+		void push_back(const storage_t& element);
 
 		template<class ReturnType>
 		ReturnType substr(std::size_t pos = 0, std::size_t len = npos) const;
@@ -515,7 +515,7 @@ namespace soe {
 	};
 
 	template <typename storage_t>
-	void stringbase_t<storage_t>::push_back(const char& element) {
+	void stringbase_t<storage_t>::push_back(const storage_t& element) {
 		base_t::ensureCapacity(base_t::size() + 2);
 
 		base_t::push_back(0);
@@ -720,6 +720,7 @@ namespace soe {
 	};
 
 	bool operator==(const char* s, const soe::unicode& s2);
+	unicode operator+(const wchar_t* s, const soe::unicode& s2);
 
 	template <typename T> using vector = container_base<T>;
 

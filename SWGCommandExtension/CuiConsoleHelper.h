@@ -14,4 +14,8 @@ public:
 	void ctor(UIPage* containerPage, UIText* text, UITextbox* textbox, const CuiConsoleHelperParserStrategy * strategy, CommandParserHistory * history) {
 		runMethod<0x00913930, void>(containerPage, text, textbox, strategy, history);
 	}
+
+	void setEcho(bool val) {
+		getMemoryReference<bool>(0x2C) = val;
+	}
 };

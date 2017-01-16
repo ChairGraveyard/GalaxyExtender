@@ -51,6 +51,11 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 	auto groundScene = Game::getGroundScene();
 	auto camera = groundScene ? groundScene->getFreeChaseCamera() : nullptr;
 
+	static bool consoleActive = false;
+
+	if (consoleActive)
+		resultUnicode += (L"\\#ffffff > \\#888888" + incomingCommand + L"\\#ffffff\n");
+
 	// Make sure this is a slash command before interpreting.
 	auto foundSlash = incomingCommand.find(L"/");
 	if (foundSlash != soe::unicode::npos) {
@@ -250,11 +255,15 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 						resultUnicode += L"activating console";
 
 						CuiMediatorFactory::activate("Console");
+
+						consoleActive = true;
 					} else {
 						resultUnicode += "could not find console in cui mediator factory";
 					}
 				} else {
 					CuiMediatorFactory::toggle("Console");
+
+					consoleActive = !consoleActive;
 				}
 
 				return true;

@@ -37,24 +37,24 @@ public:
 
 	static inline Return run(This thisPointer, ArgumentTypes ... args) {
 		static client_func_t func = reinterpret_cast<client_func_t>(FunctionAddress);
-		return func(thisPointer, args...);
+		return func(thisPointer, std::forward<ArgumentTypes>(args)...);
 	}
 
 	static inline Return runVirtual(This thisPointer, ArgumentTypes ... args) {
 		auto vtable = *reinterpret_cast<uint32_t**>(thisPointer);
 		client_func_t func = reinterpret_cast<client_func_t>(vtable[(FunctionAddress / sizeof(uint32_t*))]);
-		return func(thisPointer, args...);
+		return func(thisPointer, std::forward<ArgumentTypes>(args)...);
 	}
 };
 
 template<uint32_t FunctionAddress, typename Return, typename ... ArgumentTypes>
 class Call {
 public:
-	static inline Return run(ArgumentTypes ... args) {
+	static inline Return run(ArgumentTypes... args) {
 		typedef Return(__cdecl* client_func_t)(ArgumentTypes...);
 
 		static client_func_t func = reinterpret_cast<client_func_t>(FunctionAddress);
-		return func(args...);
+		return func(std::forward<ArgumentTypes>(args)...);
 	}
 };
 
@@ -80,7 +80,7 @@ struct Hook<Address, R(C::*)(Args...)> {
 	typedef R(C::*newMethod_t)(Args...);
 
 	static R __thiscall callHook(C* object, Args... args) {
-		return (object->*(hookStorage_t::newMethod))(args...);
+		return (object->*(hookStorage_t::newMethod))(std::forward<Args>(args)...);
 	}
 
 	typedef decltype(&callHook) original_t;
@@ -88,7 +88,7 @@ struct Hook<Address, R(C::*)(Args...)> {
 	typedef HookStorage<Address, newMethod_t, original_t> hookStorage_t;
 
 	static R run(C* thisPointer, Args... args) {
-		return hookStorage_t::original(thisPointer, args...);
+		return hookStorage_t::original(thisPointer, std::forward<Args>(args)...);
 	}
 
 };
@@ -98,7 +98,7 @@ struct Hook<Address, R(*)(Args...)> {
 	typedef R(*newMethod_t)(Args...);
 
 	static R callHook(Args... args) {
-		return hookStorage_t::newMethod(args...);
+		return hookStorage_t::newMethod(std::forward<Args>(args)...);
 	}
 
 	typedef decltype(&callHook) original_t;
@@ -106,7 +106,7 @@ struct Hook<Address, R(*)(Args...)> {
 	typedef HookStorage<Address, newMethod_t, original_t> hookStorage_t;
 
 	static R run(Args... args) {
-		return hookStorage_t::original(args...);
+		return hookStorage_t::original(std::forward<Args>(args)...);
 	}
 };
 
@@ -124,27 +124,27 @@ public:
 
 	template<int FunctionAddress, typename Return, typename ... ArgumentTypes>
 	Return runMethod(ArgumentTypes ... args) {
-		return ThisCall<FunctionAddress, Return, decltype(this), ArgumentTypes...>::run(this, args...);
+		return ThisCall<FunctionAddress, Return, decltype(this), ArgumentTypes...>::run(this, std::forward<ArgumentTypes>(args)...);
 	}
 
 	template<int FunctionAddress, typename Return, typename ... ArgumentTypes>
 	Return runMethod(ArgumentTypes ... args) const {
-		return ThisCall<FunctionAddress, Return, decltype(this), ArgumentTypes...>::run(this, args...);
+		return ThisCall<FunctionAddress, Return, decltype(this), ArgumentTypes...>::run(this, std::forward<ArgumentTypes>(args)...);
 	}
 
 	template<int FunctionAddress, typename Return, typename ... ArgumentTypes>
-	static Return runStatic(ArgumentTypes ... args) {
-		return Call<FunctionAddress, Return, ArgumentTypes...>::run(args...);
+	static Return runStatic(ArgumentTypes... args) {
+		return Call<FunctionAddress, Return, ArgumentTypes...>::run(std::forward<ArgumentTypes>(args)...);
 	}
 
 	template<uint32_t VirtualOffset, typename Return, typename ... ArgumentTypes>
 	Return runVirtual(ArgumentTypes ... args) {
-		return ThisCall<VirtualOffset, Return, decltype(this), ArgumentTypes...>::runVirtual(this, args...);
+		return ThisCall<VirtualOffset, Return, decltype(this), ArgumentTypes...>::runVirtual(this, std::forward<ArgumentTypes>(args)...);
 	}
 
 	template<uint32_t VirtualOffset, typename Return, typename ... ArgumentTypes>
 	Return runVirtual(ArgumentTypes ... args) const {
-		return ThisCall<VirtualOffset, Return, decltype(this), ArgumentTypes...>::runVirtual(this, args...);
+		return ThisCall<VirtualOffset, Return, decltype(this), ArgumentTypes...>::runVirtual(this, std::forward<ArgumentTypes>(args)...);
 	}
 
 	typedef PVOID(__cdecl* dyn_cast_t)(
@@ -159,16 +159,27 @@ public:
 	static PVOID dynamicCast(PVOID inptr, const PVOID SrcType, const PVOID TargetType);
 
 	/*template<class T, class ...Args>
-	static T* create_object(Args... args) {
-		T* address = soe::allocator<T>::allocate(sizeof(T));
+	static T* create_hooked_object(Args... args) {
+		//auto allocator = std::allocator<T>();
+		T* address = reinterpret_cast<T*>(::operator new(sizeof(T)));
 
-		new (&(*address)) T(std::forward<Args>(args)...);
+		address->ctor(std::forward<Args>(args)...);
+		//new (&(*address)) T(std::forward<Args>(args)...);
 
 		return address;
 	}*/
 
 	template<class T, class ...Args>
-	static T* create_hooked_object(Args... args) {
+	static T* create_soe_object_new(Args... args) {
+		T* address = reinterpret_cast<T*>(::operator new(sizeof(T)));
+
+		address->ctor(std::forward<Args>(args)...);
+
+		return address;
+	}
+
+	template<class T, class ...Args>
+	static T* create_soe_object(Args... args) {
 		T* address = soe::allocator<T>::allocate(sizeof(T));
 
 		address->ctor(std::forward<Args>(args)...);

@@ -300,3 +300,21 @@ soe::unicode& soe::unicode::operator+=(const wchar_t* rhs) {
 
 	return *this;
 }
+
+soe::unicode soe::operator+(const wchar_t* s, const soe::unicode& s2) {
+	int leftSize = wcslen(s);
+	int rightSize = s2.size();
+
+	soe::unicode newstr(leftSize + rightSize);
+
+
+	for (int i = 0; i < leftSize; ++i) {
+		newstr.push_back(s[i]);
+	}
+
+	for (int i = 0; i < rightSize; ++i) {
+		newstr.push_back(s2[i]);
+	}
+
+	return newstr;
+}
