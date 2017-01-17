@@ -36,6 +36,10 @@
 
 #define SETVTABLE(NEWVTABLE) *((uint32_t**)this) = NEWVTABLE + 1;
 
+#define INITIALIZE_VTABLE_DATA(NEWVTABLE) static int initialize_ = initVtableData(NEWVTABLE, this, sizeof(NEWVTABLE));
+
+#define DEFINE_VTABLE(NEWVTABLE) static uint32_t NEWVTABLE[];
+
 #define GENERATE_HOOK_TYPE_OLD(x) decltype(&x)
 #define DEFINE_HOOOK_OLD(x, y, z) typedef GENERATE_HOOK_TYPE(y) z ## _t; z ## _t z = (decltype(&y)) x;*/
 #define GENERATE_HOOK_THIS_TYPE_OLD(CLASS, METHOD, RETURNTYPE, ...) HookThis<CLASS ## *, decltype(& ## CLASS ## :: ## METHOD), RETURNTYPE, ##__VA_ARGS__ ## >

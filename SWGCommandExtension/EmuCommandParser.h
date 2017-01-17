@@ -7,7 +7,7 @@
 class EmuCommandParser : public CommandParser {
 	char data[0x58];
 
-	static uint32_t newVtable[];
+	DEFINE_VTABLE(newVtable);
 
 public:
 	void ctor();

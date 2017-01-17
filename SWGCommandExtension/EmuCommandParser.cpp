@@ -15,9 +15,11 @@
 #include "CollisionWorld.h"
 #include "ObjectAttributeManager.h"
 
-uint32_t EmuCommandParser::newVtable[] = { 0x161E6CC, 0x15EA3C4, 0x15EA3C8 };
+uint32_t EmuCommandParser::newVtable[3]; /* = { 0x161E6CC, 0x15EA3C4, 0x15EA3C8 }; for reference*/
 
 void EmuCommandParser::initializeVtable() {
+	INITIALIZE_VTABLE_DATA(newVtable);
+
 	SETVTABLEENTRY(newVtable, EmuCommandParser::performParsing);
 
 	SETVTABLE(newVtable);

@@ -21,7 +21,7 @@ class SwgCuiConsole : public CuiMediator {
 	CuiConsoleHelper* consoleHelper = nullptr;
 	CuiWidget3dObjectListViewer* viewer3D = nullptr;
 
-	static uint32_t newVtable[];
+	DEFINE_VTABLE(newVtable); 
 public:
 	void ctor(UIPage& page);
 	void initializeVtable();

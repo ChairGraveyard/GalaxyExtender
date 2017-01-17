@@ -147,6 +147,13 @@ public:
 		return ThisCall<VirtualOffset, Return, decltype(this), ArgumentTypes...>::runVirtual(this, std::forward<ArgumentTypes>(args)...);
 	}
 
+	static int initVtableData(uint32_t* dest, void* thisPointer, int size) {
+		auto source = (*(uint32_t**)thisPointer) - 1;
+		memcpy(dest, source, size);
+
+		return 0;
+	}
+
 	typedef PVOID(__cdecl* dyn_cast_t)(
 		PVOID inptr,
 		LONG VfDelta,

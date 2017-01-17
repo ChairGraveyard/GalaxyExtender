@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include <cassert>
+
 #include "UIText.h"
 #include "UITextbox.h"
 #include "SwgCuiConsole.h"
@@ -12,9 +14,11 @@
 #include "CuiWidget3dObjectListViewer.h"
 #include "EmuCommandParser.h"
 
-uint32_t SwgCuiConsole::newVtable[] = { 0x161D254, 0x9C0FB0, 0x9C1000, 0x9C1010, 0x9C1360, 0x9C1040, 0x9C1CC0, 0x9C1D30, 0x9C2760, 0x9C05C0, 0x9C0D50, 0x9C0D60, 0x9C0B80 };
+uint32_t SwgCuiConsole::newVtable[13]; /* for reference { 0x161D254, 0x9C0FB0, 0x9C1000, 0x9C1010, 0x9C1360, 0x9C1040, 0x9C1CC0, 0x9C1D30, 0x9C2760, 0x9C05C0, 0x9C0D50, 0x9C0D60, 0x9C0B80 };*/
 
 void SwgCuiConsole::initializeVtable() {
+	INITIALIZE_VTABLE_DATA(newVtable);
+
 	SETVTABLEENTRY(newVtable, SwgCuiConsole::performActivate);
 
 	SETVTABLE(newVtable);
@@ -27,6 +31,8 @@ void SwgCuiConsole::ctor(UIPage& page) {
 	outputText = (UIText*)page.GetObjectFromPath("OutputText", 35);
 	inputTextbox = (UITextbox*)page.GetObjectFromPath("InputTextbox", 36);
 	viewer3D = (CuiWidget3dObjectListViewer*) page.GetObjectFromPath("v");
+
+	assert(outputText && inputTextbox && viewer3D);
 
 	history = new CommandParserHistory(); //this is gonna leak untill i hook the dtor in the vtable
 	auto parser = create_soe_object<SwgCuiCommandParserDefault>(history);
