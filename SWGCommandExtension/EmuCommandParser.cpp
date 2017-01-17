@@ -289,8 +289,7 @@ bool EmuCommandParser::performParsing(const NetworkId& userId, const soe::vector
 		resultUnicode += templateName.c_str();
 
 		return true;
-	}
-	if (command == L"getcurrenthealth") {
+	} else if (command == L"getcurrenthealth") {
 		CreatureObject* creature = Game::getPlayerCreature();
 
 		if (creature) {
@@ -357,5 +356,4 @@ void EmuCommandParser::showHelp(soe::unicode& resultUnicode) {
 	resultUnicode += L"</emu getncflora|/emu getnoncollidableflora> - Prints the current Non-Collidable Flora Distance value to the chat.\n";
 	resultUnicode += L"</emu setall|/emu overrideall> <default|low|medium|high|ultra> - Sets all graphics settings to preset values. Type /overrideall help for info on each preset.\n";
 	resultUnicode += L"/emu help - This command, which lists help info on available extension commands.\n";
-
 }

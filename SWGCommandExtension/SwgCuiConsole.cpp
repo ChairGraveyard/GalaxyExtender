@@ -40,7 +40,7 @@ void SwgCuiConsole::ctor(UIPage& page) {
 
 	consoleHelper->setEcho(true);
 
-	const static soe::unicode str("\\#ffffff");
+	soe::unicode str("\\#ffffff");
 
 	outputText->AppendLocalText(str);
 
