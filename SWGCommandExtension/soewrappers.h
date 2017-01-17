@@ -42,6 +42,10 @@
 	typedef GENERATE_HOOK_THIS_TYPE_OLD(CLASS, METHOD, RETURNTYPE, ##__VA_ARGS__) CLASS ## _ ## METHOD ## _hook_t;
 
 
+template <uint32_t N> constexpr uint32_t compile_time() {
+	return N;
+}
+
 namespace soe {
 	template<class F>
 	struct function_traits;

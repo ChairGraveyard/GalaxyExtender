@@ -16,9 +16,9 @@ class CuiMediatorFactory {
 public:
 	class ConstructorBase {
 	protected:
-		bool m_duplicateOnly;
+		bool duplicateOnly;
 	public:
-		ConstructorBase(bool duplicateOnly) : m_duplicateOnly(duplicateOnly) {}
+		ConstructorBase(bool duplicateOnlyA) : duplicateOnly(duplicateOnlyA) {}
 
 		virtual CuiMediator* get(bool create = true) = 0;
 		virtual CuiMediator* create(UIPage& page) const = 0;

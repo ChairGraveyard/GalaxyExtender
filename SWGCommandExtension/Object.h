@@ -170,7 +170,7 @@ public:
 	}*/
 
 	template<class T, class ...Args>
-	static T* create_soe_object_new(Args... args) {
+	static T* create_soe_object_new(Args&&... args) {
 		T* address = reinterpret_cast<T*>(::operator new(sizeof(T)));
 
 		address->ctor(std::forward<Args>(args)...);
@@ -179,7 +179,7 @@ public:
 	}
 
 	template<class T, class ...Args>
-	static T* create_soe_object(Args... args) {
+	static T* create_soe_object(Args&&... args) {
 		T* address = soe::allocator<T>::allocate(sizeof(T));
 
 		address->ctor(std::forward<Args>(args)...);

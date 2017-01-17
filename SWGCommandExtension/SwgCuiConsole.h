@@ -7,16 +7,19 @@ class CuiChatParserStrategy;
 class UITextbox;
 class UIText;
 class CuiConsoleHelper;
+class CuiWidget3dObjectListViewer;
+class Object;
 
 class SwgCuiConsole : public CuiMediator {
 	char fullData[0xC8]; //fill enough for cuimediator
 
-	UIText* m_outputText = nullptr;
-	UITextbox* m_inputTextbox = nullptr;
+	UIText* outputText = nullptr;
+	UITextbox* inputTextbox = nullptr;
 
-	CommandParserHistory* m_history = nullptr;
-	CuiChatParserStrategy* m_parserStrategy = nullptr;
-	CuiConsoleHelper* m_consoleHelper = nullptr;
+	CommandParserHistory* history = nullptr;
+	CuiChatParserStrategy* parserStrategy = nullptr;
+	CuiConsoleHelper* consoleHelper = nullptr;
+	CuiWidget3dObjectListViewer* viewer3D = nullptr;
 
 	static uint32_t newVtable[];
 public:
@@ -25,5 +28,8 @@ public:
 	void performActivate();
 	DEFINE_HOOK(1, performActivate, originalActivate);
 
+	void performDeactivate();
+
+	void set3DObject(Object* obj);
 	
 };

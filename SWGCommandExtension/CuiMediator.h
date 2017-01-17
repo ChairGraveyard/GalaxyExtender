@@ -4,11 +4,16 @@
 #include "Object.h"
 
 class UIPage;
+class UIWidget;
 
 class CuiMediator : public BaseHookedObject {
 public:
 	void ctor(const char* name, UIPage& page) {
 		runMethod<0x009BFF00, CuiMediator*, const char*, UIPage&>(name, page);
+	}
+
+	UIWidget* GetParentWidget() {
+		return runMethod<0x0110C450, UIWidget*>();
 	}
 
 	void fetch() {
