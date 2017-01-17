@@ -154,6 +154,13 @@ public:
 		return 0;
 	}
 
+	static int initVtableDataFrom(uint32_t* dest, void* sourceVtableFrom, int size) {
+		auto source = (uint32_t*)sourceVtableFrom - 1;
+		memcpy(dest, source, size);
+
+		return 0;
+	}
+
 	typedef PVOID(__cdecl* dyn_cast_t)(
 		PVOID inptr,
 		LONG VfDelta,
@@ -179,7 +186,7 @@ public:
 	template<class T, class ...Args>
 	static T* create_soe_object_new(Args&&... args) {
 		T* address = reinterpret_cast<T*>(::operator new(sizeof(T)));
-
+		memset(address, 0, sizeof(T));
 		address->ctor(std::forward<Args>(args)...);
 
 		return address;

@@ -13,15 +13,25 @@
 #include "CuiConsoleHelper.h"
 #include "CuiWidget3dObjectListViewer.h"
 #include "EmuCommandParser.h"
+#include "UIMessage.h"
+#include "CuiMediatorFactory.h"
 
-uint32_t SwgCuiConsole::newVtable[13]; /* for reference { 0x161D254, 0x9C0FB0, 0x9C1000, 0x9C1010, 0x9C1360, 0x9C1040, 0x9C1CC0, 0x9C1D30, 0x9C2760, 0x9C05C0, 0x9C0D50, 0x9C0D60, 0x9C0B80 };*/
+uint32_t SwgCuiConsole::newVtableMediator[13]; /* for reference { 0x161D254, 0x9C0FB0, 0x9C1000, 0x9C1010, 0x9C1360, 0x9C1040, 0x9C1CC0, 0x9C1D30, 0x9C2760, 0x9C05C0, 0x9C0D50, 0x9C0D60, 0x9C0B80 };*/
+uint32_t SwgCuiConsole::newVtableEventCallback[33];
 
 void SwgCuiConsole::initializeVtable() {
-	INITIALIZE_VTABLE_DATA(newVtable);
+	INITIALIZE_VTABLE_DATA(newVtableMediator);
 
-	SETVTABLEENTRY(newVtable, SwgCuiConsole::performActivate);
+	SETVTABLEENTRY(newVtableMediator, SwgCuiConsole::performActivate);
+	SETVTABLEENTRY(newVtableMediator, SwgCuiConsole::getCallbackObject);
 
-	SETVTABLE(newVtable);
+	SETVTABLE(newVtableMediator);
+
+	INITIALIZE_VTABLE_DATAFROM(newVtableEventCallback, 0x015E7F04);
+
+	SETVTABLEENTRY(newVtableEventCallback, SwgCuiConsole::OnMessage);
+
+	SETVTABLEOFFSET(newVtableEventCallback, 0x84);
 }
 
 void SwgCuiConsole::ctor(UIPage& page) {
@@ -31,6 +41,7 @@ void SwgCuiConsole::ctor(UIPage& page) {
 	outputText = (UIText*)page.GetObjectFromPath("OutputText", 35);
 	inputTextbox = (UITextbox*)page.GetObjectFromPath("InputTextbox", 36);
 	viewer3D = (CuiWidget3dObjectListViewer*) page.GetObjectFromPath("v");
+	thePage = &page;
 
 	assert(outputText && inputTextbox && viewer3D);
 
@@ -53,9 +64,13 @@ void SwgCuiConsole::ctor(UIPage& page) {
 
 	outputText->AppendLocalText(helpString);
 	outputText->AppendLocalText(str);
+
+	registerMediatorObject(thePage, true);
 }
 
 void SwgCuiConsole::performActivate() {
+	OutputDebugStringA("activating swg cui console");
+
 	setPointerInputActive(true);
 	setKeyboardInputActive(true);
 	setInputToggleActive(false);
@@ -72,4 +87,36 @@ void SwgCuiConsole::performDeactivate() {
 
 void SwgCuiConsole::set3DObject(Object* obj) {
 	//viewer3D->setObject(obj);
+}
+
+bool SwgCuiConsole::OnMessage(UIWidget* context, const UIMessage* msg) {
+	int stroke = msg->getKeystroke();
+
+	/*OutputDebugStringA("OnMessage Keystroke");
+	OutputDebugStringA(std::to_string(stroke).c_str());*/
+
+	if (stroke == 27) { //escape key
+		CuiMediatorFactory::toggle("Console");
+
+		return false;
+	}
+
+	return true;
+}
+
+void SwgCuiConsole::registerMediatorObject(UIBaseObject* obj, bool activeCallbacks) {
+	obj->Attach(nullptr);
+
+	auto callbackVector = getCallbackVector();
+	auto cb = ObjectCallbackData(obj, activeCallbacks);
+	callbackVector->push_back(cb);
+
+	//if (isActive()) {
+		UIWidget* widget = (UIWidget*)(obj);
+
+		auto test = getCallbackObject();
+
+		widget->AddCallback(test);
+	//}
+
 }

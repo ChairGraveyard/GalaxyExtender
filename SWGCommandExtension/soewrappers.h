@@ -36,7 +36,11 @@
 
 #define SETVTABLE(NEWVTABLE) *((uint32_t**)this) = NEWVTABLE + 1;
 
-#define INITIALIZE_VTABLE_DATA(NEWVTABLE) static int initialize_ = initVtableData(NEWVTABLE, this, sizeof(NEWVTABLE));
+#define SETVTABLEOFFSET(NEWVTABLE, OFFSET) *((uint32_t**)this + (OFFSET / sizeof(uint32_t))) = NEWVTABLE + 1;
+
+#define INITIALIZE_VTABLE_DATA(NEWVTABLE) static int initialize_##NEWVTABLE = initVtableData(NEWVTABLE, this, sizeof(NEWVTABLE));
+
+#define INITIALIZE_VTABLE_DATAFROM(NEWVTABLE, SRC) static int initialize_##NEWVTABLE = initVtableDataFrom(NEWVTABLE, (void*)SRC, sizeof(NEWVTABLE));
 
 #define DEFINE_VTABLE(NEWVTABLE) static uint32_t NEWVTABLE[];
 
