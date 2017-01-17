@@ -1,5 +1,5 @@
-# SWGCommandExtension
-Extension DLL for adding new slash commands in Star Wars Galaxies, currently adds graphics override commands.
+# GalaxyExtender
+Allows for extensions of the Star Wars Galaxies client.
 
 *     **/globaldetail X** - sets the Global Detail Level to X, valid ranges are 1-24. You must move the slider in Terrain options AFTER using this command.
 *    **/hdterrain|/highdetailterrain X** - sets the High Detail Terrain Distance to X, valid ranges are 1-50. You must move the slider in Terrain options AFTER using this command.

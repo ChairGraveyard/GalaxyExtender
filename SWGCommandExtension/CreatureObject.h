@@ -2,7 +2,6 @@
 
 #include "TangibleObject.h"
 #include "CachedNetworkId.h"
-#include "soewrappers.h"
 #include "AutoDeltaVariable.h"
 
 #include <vector>
