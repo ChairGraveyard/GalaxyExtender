@@ -17,18 +17,18 @@
 
 uint32_t EmuCommandParser::newVtable[] = { 0x161E6CC, 0x15EA3C4, 0x15EA3C8 };
 
+void EmuCommandParser::initializeVtable() {
+	SETVTABLEENTRY(newVtable, EmuCommandParser::performParsing);
+
+	SETVTABLE(newVtable);
+}
+
 float stof(const soe::unicode& str) {
 	return std::stof(str.c_str());
 }
 
 void EmuCommandParser::ctor() {
 	CommandParser::ctor("emu", 0, "...", "emu commands", nullptr);
-
-	performParsing_hook_t::hookStorage_t::newMethod = &EmuCommandParser::performParsing;
-
-	EmuCommandParser::newVtable[2] = *((uint32_t*)((void*)&performParsing_hook_t::hookStorage_t::newMethod));
-
-	*((uint32_t**)this) = newVtable + 1; //we set our own vtable
 }
 
 bool EmuCommandParser::performParsing(const NetworkId& userId, const soe::vector<soe::unicode>& args,

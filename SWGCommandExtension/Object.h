@@ -186,6 +186,16 @@ public:
 
 		return address;
 	}
+
+	template<class T, class ...Args>
+	static T* create_soe_object_vtable(Args&&... args) {
+		T* address = soe::allocator<T>::allocate(sizeof(T));
+
+		address->ctor(std::forward<Args>(args)...);
+		address->initializeVtable();
+
+		return address;
+	}
 };
 
 class Object : public BaseHookedObject {

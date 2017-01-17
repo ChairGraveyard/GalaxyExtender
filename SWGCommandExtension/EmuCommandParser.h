@@ -8,13 +8,14 @@ class EmuCommandParser : public CommandParser {
 	char data[0x58];
 
 	static uint32_t newVtable[];
+
 public:
 	void ctor();
+	void initializeVtable();
 
 	bool performParsing(const NetworkId& userId, const soe::vector<soe::unicode>& argv,
 		const soe::unicode& originalCommand, soe::unicode& result, const CommandParser* node);
-
-	DEFINE_HOOK(124235346, performParsing, originalPerformParsing);
+	DEFINE_VMETHOD(0x4, performParsing);
 
 	static void showHelp(soe::unicode& resultUnicode);
 };

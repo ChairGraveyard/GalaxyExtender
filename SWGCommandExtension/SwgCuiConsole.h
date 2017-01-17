@@ -24,12 +24,12 @@ class SwgCuiConsole : public CuiMediator {
 	static uint32_t newVtable[];
 public:
 	void ctor(UIPage& page);
+	void initializeVtable();
 
 	void performActivate();
-	DEFINE_HOOK(1, performActivate, originalActivate);
+	DEFINE_VMETHOD(0x24, performActivate);
 
 	void performDeactivate();
 
 	void set3DObject(Object* obj);
-	
 };

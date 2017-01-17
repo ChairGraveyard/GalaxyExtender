@@ -27,6 +27,15 @@
 #define DEFINE_HOOK(ADDRESS, METHOD, ORIGINAL) typedef Hook<ADDRESS, decltype(&METHOD)> ORIGINAL; \
 	typedef Hook<ADDRESS, decltype(&METHOD)> METHOD##_hook_t;
 
+#define DEFINE_VMETHOD(ADDRESS, METHOD) \
+	typedef Hook<ADDRESS, decltype(&METHOD)> METHOD##_hook_t;
+
+#define SETVTABLEENTRY(NEWVTABLE, METHOD) \
+	METHOD##_hook_t::hookStorage_t::newMethod = &METHOD; \
+	NEWVTABLE[METHOD##_hook_t::hookStorage_t::address / sizeof(void*) + 1] =  *((uint32_t*)((void*)&METHOD##_hook_t::hookStorage_t::newMethod));
+
+#define SETVTABLE(NEWVTABLE) *((uint32_t**)this) = NEWVTABLE + 1;
+
 #define GENERATE_HOOK_TYPE_OLD(x) decltype(&x)
 #define DEFINE_HOOOK_OLD(x, y, z) typedef GENERATE_HOOK_TYPE(y) z ## _t; z ## _t z = (decltype(&y)) x;*/
 #define GENERATE_HOOK_THIS_TYPE_OLD(CLASS, METHOD, RETURNTYPE, ...) HookThis<CLASS ## *, decltype(& ## CLASS ## :: ## METHOD), RETURNTYPE, ##__VA_ARGS__ ## >
