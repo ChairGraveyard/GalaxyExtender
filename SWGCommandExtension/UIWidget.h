@@ -2,6 +2,8 @@
 
 #include "UIBaseObject.h"
 
+class UIEventCallback;
+
 class UIWidget : public UIBaseObject {
 public:
 	void SetFocus() {
@@ -14,5 +16,9 @@ public:
 
 	void SetEnabled(bool val) {
 		runMethod<0x011067B0, void>(val);
+	}
+
+	void AddCallback(UIEventCallback* callback) {
+		runMethod<0x01105D30, void>(callback);
 	}
 };

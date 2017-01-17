@@ -214,6 +214,7 @@
     <ClInclude Include="UIBaseObject.h" />
     <ClInclude Include="UIEventCallback.h" />
     <ClInclude Include="UIManager.h" />
+    <ClInclude Include="UIMessage.h" />
     <ClInclude Include="UIPage.h" />
     <ClInclude Include="UIText.h" />
     <ClInclude Include="UITextbox.h" />

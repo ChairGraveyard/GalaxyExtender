@@ -22,4 +22,8 @@ public:
 	bool IsA(int type) {
 		return runVirtual<0, bool, int>(type);
 	}
+
+	void Attach(UIBaseObject* obj) {
+		runVirtual<0x10, void>(obj);
+	}
 };
