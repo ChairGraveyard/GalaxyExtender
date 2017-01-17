@@ -33,8 +33,8 @@ void EmuCommandParser::ctor() {
 	CommandParser::ctor("emu", 0, "...", "emu commands", nullptr);
 }
 
-bool EmuCommandParser::performParsing(const NetworkId& userId, const soe::vector<soe::unicode>& args,
-	const soe::unicode& originalCommand, soe::unicode& resultUnicode, const CommandParser* node) {
+bool EmuCommandParser::parse(const soe::vector<soe::unicode>& args,
+	const soe::unicode& originalCommand, soe::unicode& resultUnicode) {
 
 	using namespace soe;
 
@@ -333,7 +333,7 @@ bool EmuCommandParser::performParsing(const NetworkId& userId, const soe::vector
 
 		return true;
 	} else if (command == L"help") {
-		
+
 		showHelp(resultUnicode);
 
 		return true;
@@ -344,6 +344,12 @@ bool EmuCommandParser::performParsing(const NetworkId& userId, const soe::vector
 	}
 
 	return false;
+}
+
+bool EmuCommandParser::performParsing(const NetworkId& userId, const soe::vector<soe::unicode>& args,
+	const soe::unicode& originalCommand, soe::unicode& resultUnicode, const CommandParser* node) {
+
+	return parse(args, originalCommand, resultUnicode);
 }
 
 void EmuCommandParser::showHelp(soe::unicode& resultUnicode) {
