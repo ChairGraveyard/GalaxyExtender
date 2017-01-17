@@ -67,8 +67,8 @@ bool EmuCommandParser::parse(const soe::vector<soe::unicode>& args,
 		}
 
 		return true;
-	} else if (command == L"globaldetail") {
-		float newVal = stof(args[2]);
+	} else if (command == L"globaldetail") {		
+		float newVal = args.size() > 1 ? stof(args[2]) : 6;
 		float oldVal = TerrainObject::getLevelOfDetailThreshold();
 
 		TerrainObject::setLevelOfDetailThreshold(newVal);
@@ -81,7 +81,7 @@ bool EmuCommandParser::parse(const soe::vector<soe::unicode>& args,
 
 		return true;
 	} else if (command == L"highdetailterrain" || command == L"hdterrain") {
-		float newVal = stof(args[2]);
+		float newVal = args.size() > 1 ? stof(args[2]) : 10;
 
 		float oldVal = TerrainObject::getHighLevelOfDetailThreshold();
 
@@ -95,14 +95,14 @@ bool EmuCommandParser::parse(const soe::vector<soe::unicode>& args,
 
 		return true;
 	} else if (command == L"radialflora") {
-		float newVal = stof(args[2]);
+		float newVal = args.size() > 1 ? stof(args[2]) : 64;
 		ClientProceduralTerrainAppearance::setDynamicNearFloraDistance(newVal);
 
 		resultUnicode += L"Radial Flora distance set.";
 
 		return true;
 	} else if (command == L"noncollidableflora" || command == L"ncflora") {
-		float newVal = stof(args[2]);
+		float newVal = args.size() > 1 ? stof(args[2]) : 32;
 		ClientProceduralTerrainAppearance::setStaticNonCollidableFloraDistance(newVal);
 
 		resultUnicode += L"Non-Collidable Flora distance set.";
@@ -110,7 +110,7 @@ bool EmuCommandParser::parse(const soe::vector<soe::unicode>& args,
 		return true;
 	} else if (command == L"viewdistance" || command == L"vd") {
 		if (camera) {
-			float newVal = stof(args[2]);
+			float newVal = args.size() > 1 ? stof(args[2]) : 512;
 
 			camera->setViewDistance(newVal);
 
