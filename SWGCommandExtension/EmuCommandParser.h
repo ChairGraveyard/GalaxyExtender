@@ -11,6 +11,7 @@ class EmuCommandParser : public CommandParser {
 
 public:
 	void ctor();
+	static bool parse(const soe::vector<soe::unicode>& args, const soe::unicode& originalCommand, soe::unicode& resultUnicode);
 	void initializeVtable();
 
 	bool performParsing(const NetworkId& userId, const soe::vector<soe::unicode>& argv,

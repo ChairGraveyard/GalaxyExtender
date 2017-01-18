@@ -5,6 +5,22 @@
 #include "CuiChatParser.h"
 #include "CuiMediatorFactory.h"
 #include "SwgCuiConsole.h"
+#include "EmuCommandParser.h"
+
+template<typename String, typename Delimiter, typename Vector>
+void split(const String& s, Delimiter delim, Vector& v) {
+	auto i = 0;
+	auto pos = s.find(delim);
+	while (pos != String::npos) {
+		v.push_back(s.substr(i, pos - i));
+		i = ++pos;
+		pos = s.find(delim, pos);
+
+		if (pos == String::npos)
+			v.push_back(s.substr(i, s.length()));
+	}
+}
+
 
 bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& resultUnicode, uint32_t chatRoomID, bool useChatRoom) {
 	CuiMediator* console = CuiMediatorFactory::get("Console");
@@ -43,6 +59,16 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 		} else if (command == L"exit") {
 			if (consoleActive) {
 				CuiMediatorFactory::toggle("Console");
+
+				return true;
+			}
+		} else if ((command.size() == 3 && command == L"emu") || (command.find(L"emu ") == 0)) {
+			if (!consoleActive) {
+				soe::vector<soe::unicode> args;
+				//args.push_back(command);
+				split(command, L' ', args);
+
+				EmuCommandParser::parse(args, command, resultUnicode);
 
 				return true;
 			}
