@@ -38,7 +38,7 @@ public:
 	DEFINE_HOOK(SETLODADDRESS, setLevelOfDetailThresholdHook, oldSetLoDThreshold);
 
 	bool isWithinTerrainBoundaries(const Vector& position) const {
-		return runMethod<0x00B5CD90, bool>(position);
+		return runMethod<0x00B5CD90, bool, const Vector&>(position);
 	}
 
 	float getMapWidthInMeters() const {

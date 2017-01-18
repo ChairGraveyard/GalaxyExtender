@@ -65,7 +65,6 @@ bool CuiChatParser::parse(const soe::unicode& incomingCommand, soe::unicode& res
 		} else if ((command.size() == 3 && command == L"emu") || (command.find(L"emu ") == 0)) {
 			if (!consoleActive) {
 				soe::vector<soe::unicode> args;
-				//args.push_back(command);
 				split(command, L' ', args);
 
 				EmuCommandParser::parse(args, command, resultUnicode);
