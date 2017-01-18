@@ -66,6 +66,8 @@ void SwgCuiConsole::ctor(UIPage& page) {
 	outputText->AppendLocalText(str);
 
 	registerMediatorObject(thePage, true);
+
+	//OutputDebugStringA(std::string("this pointer:" + std::to_string((uint32_t)this)).c_str());
 }
 
 void SwgCuiConsole::performActivate() {
@@ -90,6 +92,9 @@ void SwgCuiConsole::set3DObject(Object* obj) {
 }
 
 bool SwgCuiConsole::OnMessage(UIWidget* context, const UIMessage* msg) {
+	//OutputDebugStringA(std::string("this OnMessage pointer:" + std::to_string((uint32_t)this)).c_str());
+	//this pointer is 0x84 because we're overriding UIEventCallback
+	
 	int stroke = msg->getKeystroke();
 
 	/*OutputDebugStringA("OnMessage Keystroke");
@@ -108,8 +113,7 @@ void SwgCuiConsole::registerMediatorObject(UIBaseObject* obj, bool activeCallbac
 	obj->Attach(nullptr);
 
 	auto callbackVector = getCallbackVector();
-	auto cb = ObjectCallbackData(obj, activeCallbacks);
-	callbackVector->push_back(cb);
+	callbackVector->push_back(ObjectCallbackData(obj, activeCallbacks));
 
 	//if (isActive()) {
 		UIWidget* widget = (UIWidget*)(obj);

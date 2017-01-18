@@ -26,7 +26,11 @@ void EmuCommandParser::initializeVtable() {
 }
 
 float stof(const soe::unicode& str) {
-	return std::stof(str.c_str());
+	try {
+		return std::stof(str.c_str());
+	} catch (...) {
+		return 0;
+	}
 }
 
 void EmuCommandParser::ctor() {
@@ -297,7 +301,7 @@ bool EmuCommandParser::parse(const soe::vector<soe::unicode>& args,
 		if (creature) {
 			int healthValue = creature->getAttribute(CreatureObject::Health);
 
-			char message[1024];
+			char message[128];
 			sprintf_s(message, sizeof(message), "Your current health is: %d",
 				healthValue);
 
@@ -333,7 +337,6 @@ bool EmuCommandParser::parse(const soe::vector<soe::unicode>& args,
 
 		return true;
 	} else if (command == L"help") {
-
 		showHelp(resultUnicode);
 
 		return true;
